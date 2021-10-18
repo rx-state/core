@@ -124,6 +124,11 @@ const shareLatest = <T>(
         },
       })
       subscription!.add(pSubs)
+      subscription!.add(() => {
+        // When the subscription tears down (i.e. refCount = 0) and no value was emitted we must reject the promise.
+        // we can directly emit error without any check, as if it had a value the promise already resolved.
+        error(noSubscribersErr)
+      })
     }))
   }
 
