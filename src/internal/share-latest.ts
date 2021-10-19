@@ -104,7 +104,6 @@ const shareLatest = <T>(
     }
 
     if (currentValue !== EMPTY_VALUE) return currentValue
-    if (defaultValue !== EMPTY_VALUE) return defaultValue
     if (promise) return promise
 
     return (promise = new Promise<T>((res, rej) => {
