@@ -2,6 +2,8 @@ import { Observable, Subscription, Subject, noop, Subscriber } from "rxjs"
 import { StateObservable } from "../StateObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
+const T = () => true
+
 const shareLatest = <T>(
   source$: Observable<T>,
   defaultValue: T,
@@ -18,8 +20,7 @@ const shareLatest = <T>(
       ? noop
       : () => {
           currentValue === EMPTY_VALUE &&
-            subject &&
-            subject!.next((currentValue = defaultValue))
+            subject?.next((currentValue = defaultValue))
         }
 
   const result = new Observable<T>((subscriber) => {
@@ -37,6 +38,7 @@ const shareLatest = <T>(
           subscription.unsubscribe()
         }
         teardown()
+        subject?.complete()
         subject = null
         subscription = null
         promise = null
@@ -98,13 +100,15 @@ const shareLatest = <T>(
       })
     })
 
-  result.getValue = () => {
-    if (refCount === 0) {
-      throw noSubscribersErr
-    }
-
-    if (currentValue !== EMPTY_VALUE) return currentValue
+  result.getValue = (filter = T) => {
     if (promise) return promise
+
+    if (currentValue !== EMPTY_VALUE && filter(currentValue))
+      return currentValue
+
+    if (defaultValue !== EMPTY_VALUE) return defaultValue
+
+    if (refCount === 0) throw noSubscribersErr
 
     return (promise = new Promise<T>((res, rej) => {
       const error = (e: any) => {

@@ -372,11 +372,9 @@ describe("stateSingle", () => {
     })
 
     describe("with default value", () => {
-      it("throws an error if the stream does not have a subscription", () => {
-        const sourceState = state(of(1), 1)
-        expect(() => sourceState.getValue()).toThrowError(
-          new Error("No subscribers"),
-        )
+      it("returns the default value if the stream does not have a subscription", () => {
+        const sourceState = state(of(1), 7)
+        expect(sourceState.getValue()).toBe(7)
       })
 
       it("returns the latest emitted value", () => {
