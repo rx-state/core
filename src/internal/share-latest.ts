@@ -110,8 +110,10 @@ const shareLatest = <T>(
 
     if (refCount === 0) throw noSubscribersErr
 
-    return (promise = new Promise<T>((res, rej) => {
+    let err = EMPTY_VALUE
+    promise = new Promise<T>((res, rej) => {
       const error = (e: any) => {
+        err = e
         rej(e)
         promise = null
       }
@@ -132,7 +134,13 @@ const shareLatest = <T>(
         // we can directly emit error without any check, as if it had a value the promise already resolved.
         error(noSubscribersErr)
       })
-    }))
+    })
+    if (err !== EMPTY_VALUE) {
+      promise.catch(() => {}) // Mark promise error as caught, because we'll throw it synchronously
+      promise = null
+      throw err
+    }
+    return promise
   }
 
   if (defaultValue !== EMPTY_VALUE) {
