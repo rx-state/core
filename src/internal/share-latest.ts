@@ -1,6 +1,9 @@
 import { Observable, Subscription, Subject, noop, Subscriber } from "rxjs"
 import { StateObservable } from "../StateObservable"
 import { EMPTY_VALUE } from "./empty-value"
+import { NoSubscribersError, EmptyObservableError } from "../errors"
+
+const T = () => true
 
 const shareLatest = <T>(
   source$: Observable<T>,
@@ -12,15 +15,6 @@ const shareLatest = <T>(
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
   let promise: Promise<T> | null
-
-  const emitIfEmpty =
-    defaultValue === EMPTY_VALUE
-      ? noop
-      : () => {
-          currentValue === EMPTY_VALUE &&
-            subject &&
-            subject!.next((currentValue = defaultValue))
-        }
 
   const result = new Observable<T>((subscriber) => {
     subscriber.complete = noop
@@ -37,6 +31,7 @@ const shareLatest = <T>(
           subscription.unsubscribe()
         }
         teardown()
+        subject?.complete()
         subject = null
         subscription = null
         promise = null
@@ -52,19 +47,23 @@ const shareLatest = <T>(
           subject!.next((currentValue = value))
         },
         error(err: any) {
-          const _subject = subject
           subscription = null
-          subject = null
-          _subject!.error(err)
+          subject!.error(err)
         },
         complete() {
           subscription = null
-          emitIfEmpty()
+          if (currentValue !== EMPTY_VALUE) return subject!.complete()
+          if (defaultValue === EMPTY_VALUE)
+            return subject!.error(new EmptyObservableError())
+
+          subject!.next((currentValue = defaultValue))
           subject!.complete()
         },
       })
       source$.subscribe(subscription)
-      emitIfEmpty()
+      if (defaultValue !== EMPTY_VALUE && currentValue === EMPTY_VALUE) {
+        subject!.next((currentValue = defaultValue))
+      }
     } else {
       innerSub = subject.subscribe(subscriber)
       if (currentValue !== EMPTY_VALUE) {
@@ -75,36 +74,12 @@ const shareLatest = <T>(
 
   result.getRefCount = () => refCount
 
-  const noSubscribersErr = new Error("No subscribers")
-  result.getComplete$ = () =>
-    new Observable<boolean>((observer) => {
-      if (refCount === 0) {
-        observer.error(noSubscribersErr)
-        return
-      }
-
-      if (!subscription) {
-        observer.next(true)
-        observer.complete()
-        return
-      }
-
-      observer.next(false)
-      return subject!.subscribe({
-        complete() {
-          observer.next(true)
-          observer.complete()
-        },
-      })
-    })
-
-  result.getValue = () => {
-    if (refCount === 0) {
-      throw noSubscribersErr
-    }
-
-    if (currentValue !== EMPTY_VALUE) return currentValue
+  result.getValue = (filter = T) => {
     if (promise) return promise
+    if (currentValue !== EMPTY_VALUE && filter(currentValue))
+      return currentValue
+    if (defaultValue !== EMPTY_VALUE) return defaultValue
+    if (refCount === 0) throw new NoSubscribersError()
 
     return (promise = new Promise<T>((res, rej) => {
       const error = (e: any) => {
@@ -113,20 +88,22 @@ const shareLatest = <T>(
       }
       const pSubs = subject!.subscribe({
         next(v) {
-          pSubs.unsubscribe()
-          res(v)
-          promise = null
+          if (filter(v)) {
+            pSubs.unsubscribe()
+            res(v)
+            promise = null
+          }
         },
         error,
-        complete() {
-          error(new Error("Empty observable"))
+        complete: () => {
+          error(new EmptyObservableError())
         },
       })
       subscription!.add(pSubs)
       subscription!.add(() => {
         // When the subscription tears down (i.e. refCount = 0) and no value was emitted we must reject the promise.
         // we can directly emit error without any check, as if it had a value the promise already resolved.
-        error(noSubscribersErr)
+        error(new NoSubscribersError())
       })
     }))
   }

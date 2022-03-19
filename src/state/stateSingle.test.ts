@@ -1,7 +1,18 @@
 import { TestScheduler } from "rxjs/testing"
-import { from, merge, defer, Observable, noop, Subject, EMPTY, of } from "rxjs"
+import {
+  from,
+  merge,
+  defer,
+  Observable,
+  noop,
+  Subject,
+  EMPTY,
+  of,
+  firstValueFrom,
+} from "rxjs"
 import { state } from "./"
 import { withLatestFrom, startWith, map, take } from "rxjs/operators"
+import { EmptyObservableError, NoSubscribersError } from "@/errors"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -69,6 +80,18 @@ describe("stateSingle", () => {
         expectObservable(shared, sub1).toBe(expected1)
         expectObservable(shared, sub2).toBe(expected2)
       })
+    })
+
+    it("errors when the source stream completes without having emitted", async () => {
+      const subject = new Subject<void>()
+      const shared = state(subject)
+
+      setImmediate(() => {
+        subject.complete()
+      })
+      await expect(firstValueFrom(shared)).rejects.toThrowError(
+        EmptyObservableError,
+      )
     })
 
     it("restarts when all observers unsubscribe", () => {
@@ -181,6 +204,17 @@ describe("stateSingle", () => {
       })
     })
 
+    it("synchronously emits the default value on an EMPTY source", () => {
+      scheduler().run(({ expectObservable }) => {
+        const sub1 = "^"
+        const expected1 = "a"
+
+        const shared = state(EMPTY, "a")
+
+        expectObservable(shared, sub1).toBe(expected1)
+      })
+    })
+
     // Ported from connectObservable
     it("supports streams that emit functions", () => {
       scheduler().run(({ expectObservable, cold }) => {
@@ -217,7 +251,8 @@ describe("stateSingle", () => {
 
   describe("getRefCount", () => {
     it("returns how many active subscriptions does the state have", () => {
-      const source = new Subject()
+      const source = new Subject<void>()
+
       const sourceState = state(source)
       expect(sourceState.getRefCount()).toBe(0)
 
@@ -230,6 +265,7 @@ describe("stateSingle", () => {
       sub1.unsubscribe()
       expect(sourceState.getRefCount()).toBe(1)
 
+      source.next() // emitting something so that it doesn't error on complete
       source.complete()
       expect(sourceState.getRefCount()).toBe(1)
 
@@ -242,64 +278,11 @@ describe("stateSingle", () => {
     })
   })
 
-  describe("getComplete$ observable", () => {
-    const values = {
-      t: true,
-      f: false,
-    }
-
-    it("throws an error if the stream does not have a subscription", () => {
-      scheduler().run(({ expectObservable }) => {
-        const source = EMPTY
-        const complete = state(source).getComplete$()
-        const sub = "     ^"
-        const expected = "#"
-
-        expectObservable(complete, sub).toBe(
-          expected,
-          {},
-          new Error("No subscribers"),
-        )
-      })
-    })
-
-    it("emits whether the active observable has completed", () => {
-      scheduler().run(({ expectObservable, cold }) => {
-        const source = cold("---|")
-        const sub1 = "       ^------"
-        const expected1 = "  f--(t|)"
-        const sub2 = "       -------^--"
-        const expected2 = "  -------(t|)"
-
-        const s = state(source)
-        s.subscribe()
-        const complete = s.getComplete$()
-
-        expectObservable(complete, sub1).toBe(expected1, values)
-        expectObservable(complete, sub2).toBe(expected2, values)
-      })
-    })
-
-    it("immediately emits true if the active observable was already completed", () => {
-      scheduler().run(({ expectObservable, cold }) => {
-        const source = cold("---|")
-        const s = state(source)
-        s.subscribe()
-        const complete = s.getComplete$()
-        const expected = "   f--(t|)"
-
-        expectObservable(complete).toBe(expected, values)
-      })
-    })
-  })
-
   describe("getValue", () => {
     describe("without default value", () => {
       it("throws an error if the stream does not have a subscription", () => {
         const sourceState = state(of(1))
-        expect(() => sourceState.getValue()).toThrowError(
-          new Error("No subscribers"),
-        )
+        expect(() => sourceState.getValue()).toThrowError(NoSubscribersError)
       })
 
       it("returns the latest emitted value", () => {
@@ -328,13 +311,28 @@ describe("stateSingle", () => {
       it("rejects the promise if the stream completes without emitting any value", async () => {
         const source = new Subject<number>()
         const sourceState = state(source)
-        const sub = sourceState.subscribe()
+        const sub = sourceState.subscribe({ error: noop })
 
         const value = sourceState.getValue()
 
         source.complete()
 
-        await expect(value).rejects.toEqual(new Error("Empty observable"))
+        await expect(value).rejects.toThrowError(EmptyObservableError)
+
+        sub.unsubscribe()
+      })
+
+      it("rejects the promise if the stream completes without emitting a filtered value", async () => {
+        const source = new Subject<number>()
+        const sourceState = state(source)
+        const sub = sourceState.subscribe({ error: noop })
+
+        const value = sourceState.getValue((x) => x === 1)
+
+        source.next(0)
+        source.complete()
+
+        await expect(value).rejects.toThrowError(EmptyObservableError)
 
         sub.unsubscribe()
       })
@@ -348,7 +346,7 @@ describe("stateSingle", () => {
 
         sub.unsubscribe()
 
-        await expect(value).rejects.toEqual(new Error("No subscribers"))
+        await expect(value).rejects.toThrow(NoSubscribersError)
       })
 
       it("always returns the same promise while the value is not emitted", () => {
@@ -372,11 +370,9 @@ describe("stateSingle", () => {
     })
 
     describe("with default value", () => {
-      it("throws an error if the stream does not have a subscription", () => {
-        const sourceState = state(of(1), 1)
-        expect(() => sourceState.getValue()).toThrowError(
-          new Error("No subscribers"),
-        )
+      it("returns the default value if the stream does not have a subscription", () => {
+        const sourceState = state(of(1), 7)
+        expect(sourceState.getValue()).toBe(7)
       })
 
       it("returns the latest emitted value", () => {
