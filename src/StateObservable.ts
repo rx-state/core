@@ -8,11 +8,10 @@ export class StatePromise<T> extends Promise<T> {
 
 export interface StateObservable<T> extends Observable<T> {
   getRefCount: () => number
-  getComplete$: () => Observable<boolean>
-  getValue: () => T | StatePromise<T>
+  getValue: (filter?: (value: T) => boolean) => T | StatePromise<T>
 }
 
 export interface DefaultedStateObservable<T> extends StateObservable<T> {
-  getValue: () => T
+  getValue: (filter?: (value: T) => boolean) => T
   getDefaultValue: () => T
 }

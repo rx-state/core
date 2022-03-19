@@ -1,5 +1,5 @@
 import "expose-gc"
-import { defer, EMPTY, NEVER, Observable, of } from "rxjs"
+import { defer, NEVER, Observable, of } from "rxjs"
 import { map, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { state } from "./"
@@ -69,7 +69,7 @@ describe("stateFactory", () => {
         done()
       })
 
-      const stateFactory = state(() => EMPTY)
+      const stateFactory = state(() => NEVER)
       let observable: any = stateFactory()
       registry.register(observable, "stateObservable")
       observable.subscribe().unsubscribe()
@@ -236,39 +236,6 @@ describe("stateFactory", () => {
       sub2.unsubscribe()
       expect(stateA.getRefCount()).toBe(0)
       expect(stateB.getRefCount()).toBe(0)
-    })
-  })
-
-  describe("getComplete$ observable", () => {
-    const values = {
-      t: true,
-      f: false,
-    }
-
-    it("emits whether each active observable has completed", () => {
-      scheduler().run(({ expectObservable, cold }) => {
-        const sourceA = cold("---|")
-        const subA = "        ^------"
-        const expectedA = "   f--(t|)"
-        const sourceB = cold(" ---|")
-        const subB = "         ^-------"
-        const expectedB = "    f--(t|)"
-
-        const stateFactory = state((v: string) =>
-          v === "a" ? sourceA : sourceB,
-        )
-
-        const stateA = stateFactory("a")
-        const stateB = stateFactory("b")
-        stateA.subscribe()
-        stateB.subscribe()
-
-        const completeA = stateA.getComplete$()
-        const completeB = stateB.getComplete$()
-
-        expectObservable(completeA, subA).toBe(expectedA, values)
-        expectObservable(completeB, subB).toBe(expectedB, values)
-      })
     })
   })
 
