@@ -1,8 +1,8 @@
 import { Observable } from "rxjs"
 import stateFactory from "./stateFactory"
 import stateSingle from "./stateSingle"
-import { EMPTY_VALUE } from "../internal/empty-value"
-import { DefaultedStateObservable, StateObservable } from "../StateObservable"
+import { EMPTY_VALUE } from "@/internal/empty-value"
+import { DefaultedStateObservable, StateObservable } from "@/StateObservable"
 
 /**
  * Creates a StateObservable

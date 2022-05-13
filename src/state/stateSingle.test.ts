@@ -11,7 +11,7 @@ import {
   firstValueFrom,
 } from "rxjs"
 import { state } from "./"
-import { withLatestFrom, startWith, map, take } from "rxjs/operators"
+import { withLatestFrom, startWith, map, take, scan } from "rxjs/operators"
 import { EmptyObservableError, NoSubscribersError } from "@/errors"
 
 const scheduler = () =>
@@ -400,6 +400,31 @@ describe("stateSingle", () => {
     it("returns the default value of the state observable", () => {
       const sourceState = state(of(1), 3)
       expect(sourceState.getDefaultValue()).toBe(3)
+    })
+  })
+
+  describe("pipe", () => {
+    it("returns a new state observable", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const source = cold("a-b-c-d-e")
+        const subA = "       ^----!"
+        const subB = "       ---^-----!"
+        const expectedA = "  a-b-c"
+        const expectedB = "  ---bc-d-e"
+
+        const shared = state(source).pipe(scan((acc, v) => acc + v, ""))
+
+        const values = {
+          a: "a",
+          b: "ab",
+          c: "abc",
+          d: "abcd",
+          e: "abcde",
+        }
+
+        expectObservable(shared, subA).toBe(expectedA, values)
+        expectObservable(shared, subB).toBe(expectedB, values)
+      })
     })
   })
 })

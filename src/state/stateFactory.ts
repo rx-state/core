@@ -1,6 +1,5 @@
 import { Observable } from "rxjs"
-import shareLatest from "@/internal/share-latest"
-import { StateObservable } from "@/StateObservable"
+import StateObservable from "@/internal/state-observable"
 
 function cloneProps<T>(
   internal: StateObservable<T>,
@@ -33,7 +32,7 @@ export default function connectFactoryObservable<A extends [], O>(
       return cachedVal
     }
 
-    const sharedObservable$ = shareLatest(
+    const sharedObservable$ = new StateObservable(
       new Observable<O>((observer) =>
         getObservable(...input).subscribe(observer),
       ),

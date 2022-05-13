@@ -1,6 +1,6 @@
 import { Observable } from "rxjs"
-import shareLatest from "@/internal/share-latest"
+import StateObservable from "@/internal/state-observable"
 
 export default function state<T>(observable: Observable<T>, defaultValue: T) {
-  return shareLatest<T>(observable, defaultValue)
+  return new StateObservable<T>(observable, defaultValue)
 }
