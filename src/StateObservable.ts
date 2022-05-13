@@ -1,5 +1,5 @@
 import { Observable } from "rxjs"
-import { PipeState } from "./pipe-state"
+import { PipeState } from "./PipeState"
 
 export class StatePromise<T> extends Promise<T> {
   constructor(cb: (res: (value: T) => void, rej: any) => void) {
