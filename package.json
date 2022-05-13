@@ -24,17 +24,17 @@
   },
   "module": "./dist/rxstate.core.es2017.js",
   "main": "./dist/index.js",
-  "typings": "./dist/index.d.ts",
+  "typings": "./src/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "src/index.d.ts"
   ],
   "scripts": {
-    "build": "npm run build:ts && npm run build:esm2017 && npm run build:esm2019 && npm run build:cjs:dev && npm run build:cjs:prod",
+    "build": "npm run build:esm2017 && npm run build:esm2019 && npm run build:cjs:dev && npm run build:cjs:prod",
     "build:esm2019": "esbuild src/index.ts --bundle --outfile=./dist/rxstate.core.es2019.mjs --target=es2019 --external:rxjs --format=esm --sourcemap",
     "build:esm2017": "esbuild src/index.ts --bundle --outfile=./dist/rxstate.core.es2017.js --target=es2017 --external:rxjs --format=esm --sourcemap",
     "build:cjs:dev": "esbuild src/index.ts --bundle --outfile=./dist/rxstate.core.cjs.development.js --target=es2015 --external:rxjs --format=cjs --sourcemap",
     "build:cjs:prod": "esbuild src/index.ts --bundle --outfile=./dist/rxstate.core.cjs.production.min.js --target=es2015 --external:rxjs --format=cjs --minify --sourcemap",
-    "build:ts": "tsc -p ./tsconfig-build.json --outDir ./dist --skipLibCheck --emitDeclarationOnly",
     "test": "jest --coverage",
     "lint": "prettier --check README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",

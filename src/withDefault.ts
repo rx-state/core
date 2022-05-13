@@ -1,10 +1,8 @@
-import { Observable, UnaryFunction } from "rxjs"
+import type { Observable } from "rxjs"
+import type { withDefault as IWithDefault } from "./index.d"
 import { state } from "./state"
-import { DefaultedStateObservable } from "./StateObservable"
 
-export interface WithDefaultOperator<T, R>
-  extends UnaryFunction<Observable<T>, DefaultedStateObservable<T | R>> {}
-
-export function withDefault<T, D>(defaultValue: D): WithDefaultOperator<T, D> {
-  return (source$) => state<D | T>(source$, defaultValue)
-}
+export const withDefault: typeof IWithDefault =
+  <D>(defaultValue: D) =>
+  <T>(source$: Observable<T>) =>
+    state<D | T>(source$, defaultValue)
