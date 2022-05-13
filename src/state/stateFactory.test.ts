@@ -74,7 +74,7 @@ describe("stateFactory", () => {
       registry.register(observable, "stateObservable")
       observable.subscribe().unsubscribe()
       observable = undefined
-      global.gc()
+      global.gc!()
     })
 
     describe("re-subscriptions on disposed observables", () => {
