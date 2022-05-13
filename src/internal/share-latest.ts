@@ -2,6 +2,7 @@ import { Observable, Subscription, Subject, noop, Subscriber } from "rxjs"
 import { StateObservable } from "../StateObservable"
 import { EMPTY_VALUE } from "./empty-value"
 import { NoSubscribersError, EmptyObservableError } from "../errors"
+import { Effect } from "@/state/effect"
 
 const T = () => true
 
@@ -15,6 +16,7 @@ const shareLatest = <T>(
   let refCount = 0
   let currentValue: T = EMPTY_VALUE
   let promise: Promise<T> | null
+  let isEffect = false
 
   const result = new Observable<T>((subscriber) => {
     subscriber.complete = noop
@@ -25,11 +27,9 @@ const shareLatest = <T>(
     subscriber.add(() => {
       refCount--
       innerSub.unsubscribe()
-      if (refCount === 0) {
-        currentValue = EMPTY_VALUE
-        if (subscription) {
-          subscription.unsubscribe()
-        }
+      if (!refCount) {
+        if (!isEffect) currentValue = EMPTY_VALUE
+        subscription?.unsubscribe()
         teardown()
         subject?.complete()
         subject = null
@@ -49,6 +49,13 @@ const shareLatest = <T>(
         error(err: any) {
           subscription = null
           subject!.error(err)
+          if (err instanceof Effect) {
+            isEffect = true
+            Promise.resolve(() => {
+              isEffect = false
+              if (!refCount) currentValue = EMPTY_VALUE
+            })
+          }
         },
         complete() {
           subscription = null
