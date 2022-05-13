@@ -1,5 +1,5 @@
 import { Observable } from "rxjs"
-import StateObservable from "@/internal/state-observable"
+import StateObservable from "../internal/state-observable"
 
 function cloneProps<T>(
   internal: StateObservable<T>,

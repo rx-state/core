@@ -6,8 +6,8 @@ import {
   Subscriber,
   Subscription,
 } from "rxjs"
-import { EmptyObservableError, NoSubscribersError } from "@/errors"
-import { StatePromise } from "@/StateObservable"
+import { EmptyObservableError, NoSubscribersError } from "../errors"
+import { StatePromise } from "../StateObservable"
 import { EMPTY_VALUE } from "./empty-value"
 
 const T = () => true
