@@ -12,7 +12,7 @@ import {
 } from "rxjs"
 import { state } from "./"
 import { withLatestFrom, startWith, map, take, scan } from "rxjs/operators"
-import { EmptyObservableError, NoSubscribersError } from "@/errors"
+import { EmptyObservableError, NoSubscribersError } from "../errors"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
