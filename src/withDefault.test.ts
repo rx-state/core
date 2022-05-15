@@ -1,6 +1,5 @@
 import { NEVER } from "rxjs"
-import { state } from "./state"
-import { withDefault } from "./withDefault"
+import { state, withDefault } from "./"
 
 describe("withDefault", () => {
   it("makes a default state observable", () => {

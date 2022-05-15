@@ -7,17 +7,16 @@ import {
   Subscription,
 } from "rxjs"
 import { EmptyObservableError, NoSubscribersError } from "../errors"
-import { StatePromise } from "../StateObservable"
+import { StatePromise } from "../StatePromise"
+import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "./empty-value"
-
-const T = () => true
 
 export default class StateObservable<T> extends Observable<T> {
   private subject: Subject<T> | null = null
   private subscription: Subscriber<T> | null = null
   private refCount = 0
   private currentValue: T = EMPTY_VALUE
-  private promise: Promise<T> | null = null
+  private promise: Promise<Exclude<T, SUSPENSE>> | null = null
 
   constructor(
     source$: Observable<T>,
@@ -97,38 +96,43 @@ export default class StateObservable<T> extends Observable<T> {
   getRefCount = () => {
     return this.refCount
   }
-  getValue = (filter: (value: T) => boolean = T): T | StatePromise<T> => {
+  getValue = (): Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>> => {
     if (this.promise) return this.promise
-    if (this.currentValue !== EMPTY_VALUE && filter(this.currentValue))
-      return this.currentValue
-    if (this.defaultValue !== EMPTY_VALUE) return this.defaultValue
+    if (
+      this.currentValue !== EMPTY_VALUE &&
+      (this.currentValue as any) !== SUSPENSE
+    )
+      return this.currentValue as any
+    if (this.defaultValue !== EMPTY_VALUE) return this.defaultValue as any
     if (this.refCount === 0) throw new NoSubscribersError()
 
-    return (this.promise = new Promise<T>((res, rej) => {
-      const error = (e: any) => {
-        rej(e)
-        this.promise = null
-      }
-      const pSubs = this.subject!.subscribe({
-        next: (v) => {
-          if (filter(v)) {
-            pSubs.unsubscribe()
-            res(v)
-            this.promise = null
-          }
-        },
-        error,
-        complete: () => {
-          error(new EmptyObservableError())
-        },
-      })
-      this.subscription!.add(pSubs)
-      this.subscription!.add(() => {
-        // When the subscription tears down (i.e. refCount = 0) and no value was emitted we must reject the promise.
-        // we can directly emit error without any check, as if it had a value the promise already resolved.
-        error(new NoSubscribersError())
-      })
-    }))
+    return (this.promise = new StatePromise<Exclude<T, SUSPENSE>>(
+      (res, rej) => {
+        const error = (e: any) => {
+          rej(e)
+          this.promise = null
+        }
+        const pSubs = this.subject!.subscribe({
+          next: (v) => {
+            if ((v as any) !== SUSPENSE) {
+              pSubs.unsubscribe()
+              res(v as any)
+              this.promise = null
+            }
+          },
+          error,
+          complete: () => {
+            error(new EmptyObservableError())
+          },
+        })
+        this.subscription!.add(pSubs)
+        this.subscription!.add(() => {
+          // When the subscription tears down (i.e. refCount = 0) and no value was emitted we must reject the promise.
+          // we can directly emit error without any check, as if it had a value the promise already resolved.
+          error(new NoSubscribersError())
+        })
+      },
+    ))
   }
   getDefaultValue? = () => {
     return this.defaultValue

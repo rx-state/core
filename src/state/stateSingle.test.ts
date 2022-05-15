@@ -10,9 +10,8 @@ import {
   of,
   firstValueFrom,
 } from "rxjs"
-import { state } from "./"
 import { withLatestFrom, startWith, map, take, scan } from "rxjs/operators"
-import { EmptyObservableError, NoSubscribersError } from "../errors"
+import { state, SUSPENSE, EmptyObservableError, NoSubscribersError } from "../"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -322,14 +321,14 @@ describe("stateSingle", () => {
         sub.unsubscribe()
       })
 
-      it("rejects the promise if the stream completes without emitting a filtered value", async () => {
-        const source = new Subject<number>()
+      it("rejects the promise if the stream completes without emitting a non SUSPENSE value", async () => {
+        const source = new Subject<number | SUSPENSE>()
         const sourceState = state(source)
         const sub = sourceState.subscribe({ error: noop })
 
-        const value = sourceState.getValue((x) => x === 1)
+        const value = sourceState.getValue()
 
-        source.next(0)
+        source.next(SUSPENSE)
         source.complete()
 
         await expect(value).rejects.toThrowError(EmptyObservableError)

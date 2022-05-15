@@ -1,4 +1,5 @@
-export * from "./StateObservable"
-export * from "./errors"
-export * from "./withDefault"
+export { SUSPENSE } from "./SUSPENSE"
+export { StatePromise } from "./StatePromise"
+export { NoSubscribersError, EmptyObservableError } from "./errors"
 export { state } from "./state"
+export { withDefault } from "./withDefault"

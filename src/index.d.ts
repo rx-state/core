@@ -138,16 +138,19 @@ interface PipeState<T> {
   ): StateObservable<unknown>
 }
 
+export declare const SUSPENSE: unique symbol
+export declare type SUSPENSE = typeof SUSPENSE
+
 export declare class StatePromise<T> extends Promise<T> {
   constructor(cb: (res: (value: T) => void, rej: any) => void)
 }
 export interface StateObservable<T> extends Observable<T> {
   getRefCount: () => number
-  getValue: (filter?: (value: T) => boolean) => T | StatePromise<T>
+  getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
   pipe: PipeState<T>
 }
 export interface DefaultedStateObservable<T> extends StateObservable<T> {
-  getValue: (filter?: (value: T) => boolean) => T
+  getValue: () => Exclude<T, SUSPENSE>
   getDefaultValue: () => T
   pipe: PipeState<T>
 }
