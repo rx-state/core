@@ -135,6 +135,38 @@ export interface PipeState<T, ET> {
   ): StateObservable<I, EI>
 }
 
+export declare class Effect<T> {
+  constructor(value: T)
+}
+type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
+export declare function sinkEffects<Args extends Array<any>>(
+  ...args: Args
+): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<
+  IsEmpty<Args[keyof Args & number]> extends true
+    ? T
+    : Exclude<T, Args[keyof Args & number]>,
+  IsEmpty<E> extends true
+    ? Args[keyof Args & number]
+    : Args[keyof Args & number] | E
+>
+
+export function liftEffects(): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<IsEmpty<E> extends true ? T : T | E, never>
+export function liftEffects<Args extends Array<unknown>>(
+  ...args: Args
+): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<
+  | T
+  | (IsEmpty<E> extends true
+      ? Args[keyof Args & number] // simplified from [keyof Args extends number ? keyof Args : never]
+      : E & Args[keyof Args & number]),
+  IsEmpty<E> extends true ? never : Exclude<E, Args[keyof Args & number]>
+>
+
 export declare const SUSPENSE: unique symbol
 export declare type SUSPENSE = typeof SUSPENSE
 
