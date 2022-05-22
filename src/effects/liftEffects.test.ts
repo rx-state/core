@@ -8,7 +8,7 @@ import {
   throwError,
   timer,
 } from "rxjs"
-import { Effect, liftEffects, sinkEffects } from "./"
+import { Effect, liftEffects, sinkEffects, state } from "../"
 
 describe("liftEffects", () => {
   it("lift the effects", () => {
@@ -136,5 +136,15 @@ describe("liftEffects", () => {
 
     expect(values).toEqual([1, 3, 3, 4, 9, 6, 7, 15])
     expect(errors).toEqual([])
+  })
+})
+
+describe("effect typings", () => {
+  it("tracks effects in an out of an state observable", () => {
+    state(from([1, 2, 3, null, 4, 5, 6, null])).pipe(
+      sinkEffects(null),
+      map((v) => v * 2), // Test would break if sinkEffects doesn't remove `null` from `v`
+      liftEffects(),
+    )
   })
 })

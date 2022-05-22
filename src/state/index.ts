@@ -1,4 +1,4 @@
-import type { state as IState } from "../index.d"
+import { state as IState } from "../index.d"
 import { EMPTY_VALUE } from "../internal/empty-value"
 import stateFactory from "./stateFactory"
 import stateSingle from "./stateSingle"

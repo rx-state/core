@@ -20,13 +20,14 @@ export function liftEffects<Args extends Array<unknown>>(
 >
 
 export function liftEffects<Args extends Array<any>>(...args: Args) {
-  type UnionArgTypes = Args[keyof Args extends number ? keyof Args : never]
   const toInclude = new Set(args)
   return <T, E>(
     source$: EffectObservable<T, E>,
   ): EffectObservable<
-    unknown extends E ? T | UnionArgTypes : T | (UnionArgTypes & E),
-    unknown extends E ? never : Exclude<E, UnionArgTypes>
+    unknown extends E
+      ? T | Args[keyof Args & number]
+      : T | (Args[keyof Args & number] & E),
+    unknown extends E ? never : Exclude<E, Args[keyof Args & number]>
   > => {
     return new Observable((observer) => {
       let subscriber: Subscriber<any>

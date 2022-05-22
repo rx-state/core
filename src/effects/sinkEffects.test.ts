@@ -1,5 +1,5 @@
 import { from, Observable } from "rxjs"
-import { Effect, sinkEffects } from "./"
+import { Effect, sinkEffects } from "../"
 import { effect } from "./Effect"
 
 describe("sinkEffects", () => {
