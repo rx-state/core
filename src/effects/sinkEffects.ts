@@ -1,19 +1,12 @@
-import { effect } from "./Effect"
 import { Observable, Subscriber } from "rxjs"
-import type { EffectObservable } from "../index.d"
-
-type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
+import type { EffectObservable, sinkEffects as ISinkEffects } from "../index.d"
+import { effect } from "./Effect"
 
 type SubscriberWithInner<T> = Subscriber<T> & { inner: Subscriber<any> }
-export const sinkEffects = <Args extends Array<any>>(...args: Args) => {
-  type UnionArgTypes = Args[keyof Args & number]
+export const sinkEffects: typeof ISinkEffects = (...args) => {
   const toExclude = new Set(args)
-  return <T, E>(
-    source$: EffectObservable<T, E>,
-  ): EffectObservable<
-    IsEmpty<UnionArgTypes> extends true ? T : Exclude<T, UnionArgTypes>,
-    IsEmpty<E> extends true ? UnionArgTypes : UnionArgTypes | E
-  > => {
+
+  return <T, E>(source$: EffectObservable<T, E>) => {
     let waiting: SubscriberWithInner<any> | null = null
 
     return new Observable((observer) => {
