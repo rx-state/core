@@ -1,142 +1,171 @@
-import type { Observable, OperatorFunction, UnaryFunction } from "rxjs"
+import type { Observable, UnaryFunction } from "rxjs"
 
-interface PipeState<T> {
-  <A>(defaultOp: WithDefaultOperator<T, A>): DefaultedStateObservable<T | A>
-  <A, B>(
-    op1: OperatorFunction<T, A>,
+interface EffectOperatorFunction<T, ET, R, ER>
+  extends UnaryFunction<EffectObservable<T, ET>, EffectObservable<R, ER>> {}
+
+// prettier-ignore
+export interface PipeState<T, ET> {
+  <A>(
+    defaultOp: WithDefaultOperator<T, A>,
+  ): DefaultedStateObservable<T | A, ET>
+  <A, EA = ET, B = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
     defaultOp: WithDefaultOperator<A, B>,
-  ): DefaultedStateObservable<A | B>
-  <A, B, C>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
+  ): DefaultedStateObservable<A | B, EA>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
     defaultOp: WithDefaultOperator<B, C>,
-  ): DefaultedStateObservable<B | C>
-  <A, B, C, D>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
+  ): DefaultedStateObservable<B | C, EB>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
     defaultOp: WithDefaultOperator<C, D>,
-  ): DefaultedStateObservable<C | D>
-  <A, B, C, D, E>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
+  ): DefaultedStateObservable<C | D, EC>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
     defaultOp: WithDefaultOperator<D, E>,
-  ): DefaultedStateObservable<D | E>
-  <A, B, C, D, E, F>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
+  ): DefaultedStateObservable<D | E, ED>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
     defaultOp: WithDefaultOperator<E, F>,
-  ): DefaultedStateObservable<E | F>
-  <A, B, C, D, E, F, G>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
+  ): DefaultedStateObservable<E | F, EE>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
     defaultOp: WithDefaultOperator<F, G>,
-  ): DefaultedStateObservable<F | G>
-  <A, B, C, D, E, F, G, H>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-    op7: OperatorFunction<F, G>,
+  ): DefaultedStateObservable<F | G, EF>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
     defaultOp: WithDefaultOperator<G, H>,
-  ): DefaultedStateObservable<G | H>
-  <A, B, C, D, E, F, G, H, I>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-    op7: OperatorFunction<F, G>,
-    op8: OperatorFunction<G, H>,
+  ): DefaultedStateObservable<G | H, EG>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
     defaultOp: WithDefaultOperator<H, I>,
-  ): DefaultedStateObservable<H | I>
-  (): StateObservable<T>
-  <A>(op1: OperatorFunction<T, A>): StateObservable<A>
-  <A, B>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-  ): StateObservable<B>
-  <A, B, C>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-  ): StateObservable<C>
-  <A, B, C, D>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-  ): StateObservable<D>
-  <A, B, C, D, E>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-  ): StateObservable<E>
-  <A, B, C, D, E, F>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-  ): StateObservable<F>
-  <A, B, C, D, E, F, G>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-    op7: OperatorFunction<F, G>,
-  ): StateObservable<G>
-  <A, B, C, D, E, F, G, H>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-    op7: OperatorFunction<F, G>,
-    op8: OperatorFunction<G, H>,
-  ): StateObservable<H>
-  <A, B, C, D, E, F, G, H, I>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-    op7: OperatorFunction<F, G>,
-    op8: OperatorFunction<G, H>,
-    op9: OperatorFunction<H, I>,
-  ): StateObservable<I>
-  <A, B, C, D, E, F, G, H, I>(
-    op1: OperatorFunction<T, A>,
-    op2: OperatorFunction<A, B>,
-    op3: OperatorFunction<B, C>,
-    op4: OperatorFunction<C, D>,
-    op5: OperatorFunction<D, E>,
-    op6: OperatorFunction<E, F>,
-    op7: OperatorFunction<F, G>,
-    op8: OperatorFunction<G, H>,
-    op9: OperatorFunction<H, I>,
-    ...operations: OperatorFunction<any, any>[]
-  ): StateObservable<unknown>
+  ): DefaultedStateObservable<H | I, EH>
+ 
+  (): StateObservable<T, ET>
+  <A, EA = ET>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+  ): StateObservable<A, EA>
+  <A, EA = ET, B = unknown, EB = EA>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+  ): StateObservable<B, EB>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+  ): StateObservable<C, EC>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+  ): StateObservable<D, ED>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+  ): StateObservable<E, EE>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+  ): StateObservable<F, EF>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+  ): StateObservable<G, EG>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
+  ): StateObservable<H, EH>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown, EI = EH>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
+    op9: EffectOperatorFunction<H, EH, I, EI>,
+  ): StateObservable<I, EI>
 }
+
+export declare class Effect<T> {
+  constructor(value: T)
+}
+type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
+export declare function sinkEffects<Args extends Array<any>>(
+  ...args: Args
+): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<
+  IsEmpty<Args[keyof Args & number]> extends true
+    ? T
+    : Exclude<T, Args[keyof Args & number]>,
+  IsEmpty<E> extends true
+    ? Args[keyof Args & number]
+    : Args[keyof Args & number] | E
+>
+
+export function liftEffects(): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<IsEmpty<E> extends true ? T : T | E, never>
+export function liftEffects<Args extends Array<unknown>>(
+  ...args: Args
+): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<
+  | T
+  | (IsEmpty<E> extends true
+      ? Args[keyof Args & number]
+      : E & Args[keyof Args & number]),
+  IsEmpty<E> extends true ? never : Exclude<E, Args[keyof Args & number]>
+>
 
 export declare const SUSPENSE: unique symbol
 export declare type SUSPENSE = typeof SUSPENSE
@@ -144,19 +173,20 @@ export declare type SUSPENSE = typeof SUSPENSE
 export declare class StatePromise<T> extends Promise<T> {
   constructor(cb: (res: (value: T) => void, rej: any) => void)
 }
-export interface StateObservable<T> extends Observable<T> {
+
+interface EffectObservable<T, E> extends Observable<T> {}
+export interface StateObservable<T, E> extends EffectObservable<T, E> {
   getRefCount: () => number
   getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
-  pipe: PipeState<T>
+  pipe: PipeState<T, E>
 }
-export interface DefaultedStateObservable<T> extends StateObservable<T> {
+export interface DefaultedStateObservable<T, E> extends StateObservable<T, E> {
   getValue: () => Exclude<T, SUSPENSE>
   getDefaultValue: () => T
-  pipe: PipeState<T>
 }
 
 export interface WithDefaultOperator<T, R>
-  extends UnaryFunction<Observable<T>, DefaultedStateObservable<T | R>> {}
+  extends UnaryFunction<Observable<T>, DefaultedStateObservable<T | R, any>> {}
 export declare function withDefault<T, D>(
   defaultValue: D,
 ): WithDefaultOperator<T, D>
@@ -167,6 +197,11 @@ export declare class NoSubscribersError extends Error {
 export declare class EmptyObservableError extends Error {
   constructor()
 }
+
+type StateObservableInput<T, E> =
+  | EffectObservable<T, E>
+  | StateObservable<T, E>
+  | DefaultedStateObservable<T, E>
 
 /**
  * Creates a StateObservable
@@ -182,11 +217,13 @@ export declare class EmptyObservableError extends Error {
  * subscription, then the state Observable will synchronously emit the
  * defaultValue if present.
  */
-export declare function state<T>(
-  observable: Observable<T>,
+export declare function state<T, E>(
+  observable: StateObservableInput<T, E>,
   defaultValue: T,
-): DefaultedStateObservable<T>
-export declare function state<T>(observable: Observable<T>): StateObservable<T>
+): DefaultedStateObservable<T, E>
+export declare function state<T, E>(
+  observable: StateObservableInput<T, E>,
+): StateObservable<T, E>
 /**
  * Creates a factory of StateObservables
  *
@@ -203,10 +240,10 @@ export declare function state<T>(observable: Observable<T>): StateObservable<T>
  * subscription, then the state Observable will synchronously emit the
  * defaultValue if present.
  */
-export declare function state<A extends unknown[], O>(
-  getObservable: (...args: A) => Observable<O>,
+export declare function state<A extends unknown[], O, E>(
+  getObservable: (...args: A) => StateObservableInput<O, E>,
   defaultValue: O | ((...args: A) => O),
-): (...args: A) => DefaultedStateObservable<O>
-export declare function state<A extends unknown[], O>(
-  getObservable: (...args: A) => Observable<O>,
-): (...args: A) => StateObservable<O>
+): (...args: A) => DefaultedStateObservable<O, E>
+export declare function state<A extends unknown[], O, E>(
+  getObservable: (...args: A) => StateObservableInput<O, E>,
+): (...args: A) => StateObservable<O, E>
