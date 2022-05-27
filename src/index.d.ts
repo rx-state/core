@@ -2,7 +2,7 @@ import type { Observable, OperatorFunction, UnaryFunction } from "rxjs"
 
 // Effects
 interface EffectlessOperatorFunction<T, R, TE, RE> {
-  (source$: EffectObservable<T, TE>): PipelessEffectObservable<R, RE>
+  (source$: PipelessEffectObservable<T, TE>): PipelessEffectObservable<R, RE>
 }
 
 interface EffectOperatorFunction<T, R, TE, RE> {
@@ -23,6 +23,12 @@ export interface EffectObservable<T, out ET> extends PipelessEffectObservable<T,
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
   ): EffectObservable<B, EB>
+
+  pipe<A, B, C, EA, EB = EA, EC = EB>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B,C, EB, EC>,
+  ): EffectObservable<C, EC>
 }
 
 declare module "rxjs" {
@@ -36,6 +42,11 @@ declare module "rxjs" {
       op1: EffectlessOperatorFunction<T, A, never, EA>,
       op2: EffectlessOperatorFunction<A, B, EA, EB>,
     ): EffectObservable<B, EB>
+    pipe<A, B, C, EA, EB = EA, EC = EB>(
+      op1: EffectlessOperatorFunction<T, A, never, EA>,
+      op2: EffectlessOperatorFunction<A, B, EA, EB>,
+      op3: EffectlessOperatorFunction<B,C, EB, EC>,
+    ): EffectObservable<C, EC>
   }
 
   function merge<Args extends EffectObservable<unknown, unknown>[]>(
