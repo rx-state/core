@@ -1,10 +1,173 @@
-import type { Observable, UnaryFunction } from "rxjs"
+import type { Observable, OperatorFunction } from "rxjs"
 
+export interface UnaryEffectFunction<T, TE, R, RE> {
+  (source: EffectObservable<T, TE>): EffectObservable<R, RE>
+  _foo: [T, TE, R, RE]
+}
+
+// Effects
 interface EffectOperatorFunction<T, ET, R, ER>
-  extends UnaryFunction<EffectObservable<T, ET>, EffectObservable<R, ER>> {}
+  extends UnaryEffectFunction<T, ET, R, ER> {}
 
 // prettier-ignore
-export interface PipeState<T, ET> {
+interface PipeEffect<T, ET = never> {
+  (): EffectObservable<T, ET>
+  <A, EA = ET>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+  ): EffectObservable<A, EA>
+  <A, EA = ET, B = unknown, EB = EA>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+  ): EffectObservable<B, EB>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+  ): EffectObservable<C, EC>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+  ): EffectObservable<D, ED>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+  ): EffectObservable<E, EE>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+  ): EffectObservable<F, EF>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+  ): EffectObservable<G, EG>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
+  ): EffectObservable<H, EH>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown, EI = EH>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
+    op9: EffectOperatorFunction<H, EH, I, EI>,
+  ): EffectObservable<I, EI>
+}
+
+export interface EffectObservable<T, E = never> extends Observable<T> {
+  pipe: PipeEffect<T, E>
+  __inner?: E
+}
+
+declare module "rxjs" {
+  // prettier-ignore
+  interface Observable<T> {
+    pipe(): Observable<T>
+    pipe<A, EA = never>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+    ): EffectObservable<A, EA>
+    pipe<A, B, EA = never, EB = EA>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+    ): EffectObservable<B, EB>
+
+
+
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+    ): EffectObservable<C, EC>
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+      op4: EffectOperatorFunction<C, EC, D, ED>,
+    ): EffectObservable<D, ED>
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+      op4: EffectOperatorFunction<C, EC, D, ED>,
+      op5: EffectOperatorFunction<D, ED, E, EE>,
+    ): EffectObservable<E, EE>
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+      op4: EffectOperatorFunction<C, EC, D, ED>,
+      op5: EffectOperatorFunction<D, ED, E, EE>,
+      op6: EffectOperatorFunction<E, EE, F, EF>,
+    ): EffectObservable<F, EF>
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+      op4: EffectOperatorFunction<C, EC, D, ED>,
+      op5: EffectOperatorFunction<D, ED, E, EE>,
+      op6: EffectOperatorFunction<E, EE, F, EF>,
+      op7: EffectOperatorFunction<F, EF, G, EG>,
+    ): EffectObservable<G, EG>
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+      op4: EffectOperatorFunction<C, EC, D, ED>,
+      op5: EffectOperatorFunction<D, ED, E, EE>,
+      op6: EffectOperatorFunction<E, EE, F, EF>,
+      op7: EffectOperatorFunction<F, EF, G, EG>,
+      op8: EffectOperatorFunction<G, EG, H, EH>,
+    ): EffectObservable<H, EH>
+    pipe<A, EA = never, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown, EI = EH>(
+      op1: EffectOperatorFunction<T, never, A, EA>,
+      op2: EffectOperatorFunction<A, EA, B, EB>,
+      op3: EffectOperatorFunction<B, EB, C, EC>,
+      op4: EffectOperatorFunction<C, EC, D, ED>,
+      op5: EffectOperatorFunction<D, ED, E, EE>,
+      op6: EffectOperatorFunction<E, EE, F, EF>,
+      op7: EffectOperatorFunction<F, EF, G, EG>,
+      op8: EffectOperatorFunction<G, EG, H, EH>,
+      op9: EffectOperatorFunction<H, EH, I, EI>,
+    ): EffectObservable<I, EI>
+  }
+
+  function merge<Args extends EffectObservable<unknown, unknown>[]>(
+    ...sources: Args
+  ): Args extends Array<EffectObservable<infer T, infer E>>
+    ? EffectObservable<T, E>
+    : never
+  function merge<Args extends EffectObservable<unknown, unknown>[]>(
+    ...sourcesAndConcurrency: [...Args, number?]
+  ): Args extends Array<EffectObservable<infer T, infer E>>
+    ? EffectObservable<T, E>
+    : never
+}
+
+// prettier-ignore
+interface PipeState<T, ET> {
   <A>(
     defaultOp: WithDefaultOperator<T, A>,
   ): DefaultedStateObservable<T | A, ET>
@@ -174,13 +337,13 @@ export declare class StatePromise<T> extends Promise<T> {
   constructor(cb: (res: (value: T) => void, rej: any) => void)
 }
 
-interface EffectObservable<T, E> extends Observable<T> {}
-export interface StateObservable<T, E> extends EffectObservable<T, E> {
+export interface StateObservable<T, E = never> extends EffectObservable<T, E> {
   getRefCount: () => number
   getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
   pipe: PipeState<T, E>
 }
-export interface DefaultedStateObservable<T, E> extends StateObservable<T, E> {
+export interface DefaultedStateObservable<T, E = never>
+  extends StateObservable<T, E> {
   getValue: () => Exclude<T, SUSPENSE>
   getDefaultValue: () => T
 }
@@ -217,11 +380,11 @@ type StateObservableInput<T, E> =
  * subscription, then the state Observable will synchronously emit the
  * defaultValue if present.
  */
-export declare function state<T, E>(
+export declare function state<T, E = never>(
   observable: StateObservableInput<T, E>,
   defaultValue: T,
 ): DefaultedStateObservable<T, E>
-export declare function state<T, E>(
+export declare function state<T, E = never>(
   observable: StateObservableInput<T, E>,
 ): StateObservable<T, E>
 /**
@@ -240,10 +403,10 @@ export declare function state<T, E>(
  * subscription, then the state Observable will synchronously emit the
  * defaultValue if present.
  */
-export declare function state<A extends unknown[], O, E>(
+export declare function state<A extends unknown[], O, E = never>(
   getObservable: (...args: A) => StateObservableInput<O, E>,
   defaultValue: O | ((...args: A) => O),
 ): (...args: A) => DefaultedStateObservable<O, E>
-export declare function state<A extends unknown[], O, E>(
+export declare function state<A extends unknown[], O, E = never>(
   getObservable: (...args: A) => StateObservableInput<O, E>,
 ): (...args: A) => StateObservable<O, E>
