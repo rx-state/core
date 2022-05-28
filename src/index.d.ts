@@ -9,11 +9,12 @@ interface EffectOperatorFunction<T, R, TE, RE> {
   (source$: EffectObservable<T, TE>): EffectObservable<R, RE>
 }
 
-interface PipelessEffectObservable <T, out ET = never> extends Observable<T> {
+interface PipelessEffectObservable<T, ET = never> extends Observable<T> {
   __inner?: ET
 }
 
-export interface EffectObservable<T, out ET> extends PipelessEffectObservable<T, ET> {
+// prettier-ignore
+export interface EffectObservable<T, ET> extends PipelessEffectObservable<T, ET> {
   pipe(): EffectObservable<T, ET>
   pipe<A, EA = ET>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
@@ -81,39 +82,33 @@ interface PipeState<T, ET> {
   ): StateObservable<B, EB>
 }
 
-/*
-// prettier-ignore
-interface PipeEffect<T, ET = never> {
-}
-*/
-
 export declare class Effect<T> {
   constructor(value: T)
 }
 type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
 export declare function sinkEffects<Args extends Array<any>, T, E>(
   ...args: Args
-): EffectOperatorFunction<
+): EffectlessOperatorFunction<
   T,
   Exclude<T, Args[keyof Args & number]>,
   E,
-  Args[keyof Args & number] | E
+  Args[keyof Args & number] | (IsEmpty<E> extends true ? never : E)
 >
 
-export function liftEffects(): <T, E>(
-  source$: EffectObservable<T, E>,
-) => EffectObservable<IsEmpty<E> extends true ? T : T | E, never>
-export function liftEffects<Args extends Array<unknown>>(
-  ...args: Args
-): <T, E>(
-  source$: EffectObservable<T, E>,
-) => EffectObservable<
-  | T
-  | (IsEmpty<E> extends true
-      ? Args[keyof Args & number]
-      : E & Args[keyof Args & number]),
-  IsEmpty<E> extends true ? never : Exclude<E, Args[keyof Args & number]>
+export function liftEffects<T, E>(): EffectlessOperatorFunction<
+  T,
+  T | E,
+  E,
+  never
 >
+// export function liftEffects<Args extends Array<unknown>, T, E>(
+//   ...args: Args
+// ): EffectlessOperatorFunction<
+//   T,
+//   T | (E & Args[keyof Args & number]),
+//   E,
+//   Exclude<E, Args[keyof Args & number]>
+// >
 
 export declare const SUSPENSE: unique symbol
 export declare type SUSPENSE = typeof SUSPENSE
