@@ -81,33 +81,25 @@ export interface EffectObservable<T, E> extends Observable<T> {
 interface EffectOperatorFunction<T, R, ET, ER>
   extends UnaryFunction<EffectObservable<T, ET>, EffectObservable<R, ER>> {}
 
-type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
-export declare function sinkEffects<Args extends Array<any>>(
+export declare function sinkEffects<Args extends Array<any>, T>(
   ...args: Args
-): <T, E>(
+): <E>(
   source$: EffectObservable<T, E>,
 ) => EffectObservable<
-  IsEmpty<Args[keyof Args & number]> extends true
-    ? T
-    : Exclude<T, Args[keyof Args & number]>,
-  IsEmpty<E> extends true
-    ? Args[keyof Args & number]
-    : Args[keyof Args & number] | E
+  Exclude<T, Args[keyof Args & number]>,
+  Args[keyof Args & number] | E
 >
 
-export function liftEffects(): <T, E>(
+export function liftEffects<T>(): <E>(
   source$: EffectObservable<T, E>,
 ) => EffectObservable<T | E, never>
-export function liftEffects<Args extends Array<unknown>>(
+export function liftEffects<Args extends Array<unknown>, T>(
   ...args: Args
-): <T, E>(
+): <E>(
   source$: EffectObservable<T, E>,
 ) => EffectObservable<
-  | T
-  | (IsEmpty<E> extends true
-      ? Args[keyof Args & number]
-      : E & Args[keyof Args & number]),
-  IsEmpty<E> extends true ? never : Exclude<E, Args[keyof Args & number]>
+  T | (E & Args[keyof Args & number]),
+  Exclude<E, Args[keyof Args & number]>
 >
 
 export declare const SUSPENSE: unique symbol

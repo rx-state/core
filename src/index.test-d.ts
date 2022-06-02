@@ -61,6 +61,7 @@ import {
     sinkEffects(1 as const),
     map((v) => `${v}`),
     liftEffects(1 as const),
+    filter((v) => v < 10),
   )
   expectType<EffectObservable<1 | string, 3>>(filterSinkMapLift$)
 }
@@ -103,6 +104,7 @@ import {
     sinkEffects(1 as const),
     map((v) => `${v}`),
     liftEffects(1 as const),
+    filter((v) => v < 10),
   )
   expectType<StateObservable<1 | string, 3>>(filterSinkMapLift$)
 }
