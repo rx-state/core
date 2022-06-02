@@ -135,6 +135,74 @@ export interface PipeState<T, ET> {
   ): StateObservable<I, EI>
 }
 
+// prettier-ignore
+export interface PipeEffect<T, ET> {
+  (): EffectObservable<T, ET>
+  <A, EA = ET>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+  ): EffectObservable<A, EA>
+  <A, EA = ET, B = unknown, EB = EA>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+  ): EffectObservable<B, EB>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+  ): EffectObservable<C, EC>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+  ): EffectObservable<D, ED>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+  ): EffectObservable<E, EE>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+  ): EffectObservable<F, EF>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+  ): EffectObservable<G, EG>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
+  ): EffectObservable<H, EH>
+  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown, EI = EH>(
+    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op2: EffectOperatorFunction<A, EA, B, EB>,
+    op3: EffectOperatorFunction<B, EB, C, EC>,
+    op4: EffectOperatorFunction<C, EC, D, ED>,
+    op5: EffectOperatorFunction<D, ED, E, EE>,
+    op6: EffectOperatorFunction<E, EE, F, EF>,
+    op7: EffectOperatorFunction<F, EF, G, EG>,
+    op8: EffectOperatorFunction<G, EG, H, EH>,
+    op9: EffectOperatorFunction<H, EH, I, EI>,
+  ): EffectObservable<I, EI>
+}
+
 export declare class Effect<T> {
   constructor(value: T)
 }
@@ -176,6 +244,7 @@ export declare class StatePromise<T> extends Promise<T> {
 
 interface EffectObservable<T, E> extends Observable<T> {
   _inner?: E
+  pipe: PipeEffect<T, E>
 }
 export interface StateObservable<T, E> extends EffectObservable<T, E> {
   getRefCount: () => number
