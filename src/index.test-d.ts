@@ -1,4 +1,4 @@
-import { from, map, Observable } from "rxjs"
+import { from, map, Observable, filter } from "rxjs"
 import { expectAssignable, expectNotAssignable, expectType } from "tsd"
 import {
   EffectObservable,
@@ -27,6 +27,12 @@ import {
 
   expectAssignable<Observable<1 | 2>>(source$)
   expectNotAssignable<Observable<1>>(source$)
+  expectAssignable<EffectObservable<1 | 2, 3>>(from([1, 2] as const))
+  expectNotAssignable<EffectObservable<1, 3>>(from([1, 2] as const))
+
+  expectAssignable<EffectObservable<1 | 2, 3 | 4>>(source$)
+  expectNotAssignable<EffectObservable<1 | 2, 4>>(source$)
+  expectNotAssignable<EffectObservable<2, 3>>(source$)
 
   const onlySink$ = source$.pipe(sinkEffects(1 as const))
   expectType<EffectObservable<2, 1 | 3>>(onlySink$)
@@ -49,6 +55,14 @@ import {
     liftEffects(1 as const),
   )
   expectType<EffectObservable<1 | string, 3>>(sinkMapLift$)
+
+  const filterSinkMapLift$ = source$.pipe(
+    filter((v) => v < 10),
+    sinkEffects(1 as const),
+    map((v) => `${v}`),
+    liftEffects(1 as const),
+  )
+  expectType<EffectObservable<1 | string, 3>>(filterSinkMapLift$)
 }
 
 // StateObservable
@@ -57,6 +71,10 @@ import {
 
   expectAssignable<Observable<1 | 2>>(source$)
   expectNotAssignable<Observable<1>>(source$)
+
+  expectAssignable<StateObservable<1 | 2, 3 | 4>>(source$)
+  expectNotAssignable<StateObservable<1 | 2, 4>>(source$)
+  expectNotAssignable<StateObservable<2, 3>>(source$)
 
   const onlySink$ = source$.pipe(sinkEffects(1 as const))
   expectType<StateObservable<2, 1 | 3>>(onlySink$)
@@ -79,4 +97,12 @@ import {
     liftEffects(1 as const),
   )
   expectType<StateObservable<1 | string, 3>>(sinkMapLift$)
+
+  const filterSinkMapLift$ = source$.pipe(
+    filter((v) => v < 10),
+    sinkEffects(1 as const),
+    map((v) => `${v}`),
+    liftEffects(1 as const),
+  )
+  expectType<StateObservable<1 | string, 3>>(filterSinkMapLift$)
 }

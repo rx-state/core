@@ -243,7 +243,7 @@ export declare class StatePromise<T> extends Promise<T> {
 }
 
 interface EffectObservable<T, E> extends Observable<T> {
-  _inner?: E
+  __inner?: E
   pipe: PipeEffect<T, E>
 }
 export interface StateObservable<T, E> extends EffectObservable<T, E> {
