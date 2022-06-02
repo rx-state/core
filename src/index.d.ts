@@ -1,10 +1,126 @@
 import type { Observable, UnaryFunction } from "rxjs"
 
+/// Effects
+export declare class Effect<T> {
+  constructor(value: T)
+}
+
+// prettier-ignore
+interface PipeEffect<T, ET> {
+  (): EffectObservable<T, ET>
+  <A, EA = ET>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+  ): EffectObservable<A, EA>
+  <A, B, EA = ET, EB = EA>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+  ): EffectObservable<B, EB>
+  <A, B, C, EA = ET, EB = EA, EC = EB>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+  ): EffectObservable<C, EC>
+  <A, B, C, D, EA = ET, EB = EA, EC = EB, ED = EC>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+  ): EffectObservable<D, ED>
+  <A, B, C, D, E, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+  ): EffectObservable<E, EE>
+  <A, B, C, D, E, F, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+  ): EffectObservable<F, EF>
+  <A, B, C, D, E, F, G, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+  ): EffectObservable<G, EG>
+  <A, B, C, D, E, F, G, H, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
+  ): EffectObservable<H, EH>
+  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG, EI = EH>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
+    op9: EffectOperatorFunction<H, I, EH, EI>,
+  ): EffectObservable<I, EI>
+}
+
+export interface EffectObservable<T, E> extends Observable<T> {
+  __inner?: E
+  pipe: PipeEffect<T, E>
+}
+
 interface EffectOperatorFunction<T, R, ET, ER>
   extends UnaryFunction<EffectObservable<T, ET>, EffectObservable<R, ER>> {}
 
+type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
+export declare function sinkEffects<Args extends Array<any>>(
+  ...args: Args
+): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<
+  IsEmpty<Args[keyof Args & number]> extends true
+    ? T
+    : Exclude<T, Args[keyof Args & number]>,
+  IsEmpty<E> extends true
+    ? Args[keyof Args & number]
+    : Args[keyof Args & number] | E
+>
+
+export function liftEffects(): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<T | E, never>
+export function liftEffects<Args extends Array<unknown>>(
+  ...args: Args
+): <T, E>(
+  source$: EffectObservable<T, E>,
+) => EffectObservable<
+  | T
+  | (IsEmpty<E> extends true
+      ? Args[keyof Args & number]
+      : E & Args[keyof Args & number]),
+  IsEmpty<E> extends true ? never : Exclude<E, Args[keyof Args & number]>
+>
+
+export declare const SUSPENSE: unique symbol
+export declare type SUSPENSE = typeof SUSPENSE
+
+/// StateObservable
+
+export declare class StatePromise<T> extends Promise<T> {
+  constructor(cb: (res: (value: T) => void, rej: any) => void)
+}
+
 // prettier-ignore
-export interface PipeState<T, ET> {
+interface PipeState<T, ET> {
   <A>(
     defaultOp: WithDefaultOperator<T, A>,
   ): DefaultedStateObservable<T | A, ET>
@@ -135,117 +251,6 @@ export interface PipeState<T, ET> {
   ): StateObservable<I, EI>
 }
 
-// prettier-ignore
-export interface PipeEffect<T, ET> {
-  (): EffectObservable<T, ET>
-  <A, EA = ET>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-  ): EffectObservable<A, EA>
-  <A, B, EA = ET, EB = EA>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-  ): EffectObservable<B, EB>
-  <A, B, C, EA = ET, EB = EA, EC = EB>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-  ): EffectObservable<C, EC>
-  <A, B, C, D, EA = ET, EB = EA, EC = EB, ED = EC>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-    op4: EffectOperatorFunction<C, D, EC, ED>,
-  ): EffectObservable<D, ED>
-  <A, B, C, D, E, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-    op4: EffectOperatorFunction<C, D, EC, ED>,
-    op5: EffectOperatorFunction<D, E, ED, EE>,
-  ): EffectObservable<E, EE>
-  <A, B, C, D, E, F, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-    op4: EffectOperatorFunction<C, D, EC, ED>,
-    op5: EffectOperatorFunction<D, E, ED, EE>,
-    op6: EffectOperatorFunction<E, F, EE, EF>,
-  ): EffectObservable<F, EF>
-  <A, B, C, D, E, F, G, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-    op4: EffectOperatorFunction<C, D, EC, ED>,
-    op5: EffectOperatorFunction<D, E, ED, EE>,
-    op6: EffectOperatorFunction<E, F, EE, EF>,
-    op7: EffectOperatorFunction<F, G, EF, EG>,
-  ): EffectObservable<G, EG>
-  <A, B, C, D, E, F, G, H, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-    op4: EffectOperatorFunction<C, D, EC, ED>,
-    op5: EffectOperatorFunction<D, E, ED, EE>,
-    op6: EffectOperatorFunction<E, F, EE, EF>,
-    op7: EffectOperatorFunction<F, G, EF, EG>,
-    op8: EffectOperatorFunction<G, H, EG, EH>,
-  ): EffectObservable<H, EH>
-  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG, EI = EH>(
-    op1: EffectOperatorFunction<T, A, ET, EA>,
-    op2: EffectOperatorFunction<A, B, EA, EB>,
-    op3: EffectOperatorFunction<B, C, EB, EC>,
-    op4: EffectOperatorFunction<C, D, EC, ED>,
-    op5: EffectOperatorFunction<D, E, ED, EE>,
-    op6: EffectOperatorFunction<E, F, EE, EF>,
-    op7: EffectOperatorFunction<F, G, EF, EG>,
-    op8: EffectOperatorFunction<G, H, EG, EH>,
-    op9: EffectOperatorFunction<H, I, EH, EI>,
-  ): EffectObservable<I, EI>
-}
-
-export declare class Effect<T> {
-  constructor(value: T)
-}
-type IsEmpty<T> = unknown extends T ? true : T extends never ? true : false
-export declare function sinkEffects<Args extends Array<any>>(
-  ...args: Args
-): <T, E>(
-  source$: EffectObservable<T, E>,
-) => EffectObservable<
-  IsEmpty<Args[keyof Args & number]> extends true
-    ? T
-    : Exclude<T, Args[keyof Args & number]>,
-  IsEmpty<E> extends true
-    ? Args[keyof Args & number]
-    : Args[keyof Args & number] | E
->
-
-export function liftEffects(): <T, E>(
-  source$: EffectObservable<T, E>,
-) => EffectObservable<T | E, never>
-export function liftEffects<Args extends Array<unknown>>(
-  ...args: Args
-): <T, E>(
-  source$: EffectObservable<T, E>,
-) => EffectObservable<
-  | T
-  | (IsEmpty<E> extends true
-      ? Args[keyof Args & number]
-      : E & Args[keyof Args & number]),
-  IsEmpty<E> extends true ? never : Exclude<E, Args[keyof Args & number]>
->
-
-export declare const SUSPENSE: unique symbol
-export declare type SUSPENSE = typeof SUSPENSE
-
-export declare class StatePromise<T> extends Promise<T> {
-  constructor(cb: (res: (value: T) => void, rej: any) => void)
-}
-
-interface EffectObservable<T, E> extends Observable<T> {
-  __inner?: E
-  pipe: PipeEffect<T, E>
-}
 export interface StateObservable<T, E> extends EffectObservable<T, E> {
   getRefCount: () => number
   getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
