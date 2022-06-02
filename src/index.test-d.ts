@@ -1,10 +1,12 @@
-import { from, map, Observable, filter } from "rxjs"
+import { from, map, Observable, filter, merge, of } from "rxjs"
 import { expectAssignable, expectNotAssignable, expectType } from "tsd"
 import {
+  DefaultedStateObservable,
   EffectObservable,
   liftEffects,
   sinkEffects,
   StateObservable,
+  withDefault,
 } from "./index.d"
 
 // Regular Observable
@@ -77,6 +79,28 @@ import {
   expectNotAssignable<StateObservable<1 | 2, 4>>(source$)
   expectNotAssignable<StateObservable<2, 3>>(source$)
 
+  expectAssignable<StateObservable<1 | 2, 3 | 4>>(
+    null as any as DefaultedStateObservable<1 | 2, 3 | 4>,
+  )
+  expectNotAssignable<DefaultedStateObservable<2, 3>>(source$)
+
+  const noOperator$ = source$.pipe()
+  expectType<StateObservable<1 | 2, 3>>(noOperator$)
+
+  const withDefaultAtEnd$ = source$.pipe(
+    map((v) => v),
+    withDefault("default"),
+  )
+  expectType<DefaultedStateObservable<1 | 2 | string, 3>>(withDefaultAtEnd$)
+
+  const withDefaultAtMiddle$ = source$.pipe(
+    map((v) => v),
+    withDefault("default"),
+    map((v) => v),
+  )
+  expectType<StateObservable<1 | 2 | string, 3>>(withDefaultAtMiddle$)
+
+  // Pipe with effects
   const onlySink$ = source$.pipe(sinkEffects(1 as const))
   expectType<StateObservable<2, 1 | 3>>(onlySink$)
 
@@ -107,4 +131,35 @@ import {
     filter((v) => v < 10),
   )
   expectType<StateObservable<1 | string, 3>>(filterSinkMapLift$)
+}
+
+// merge
+{
+  const regularObservables$ = merge(of(1), of("string"))
+  expectType<EffectObservable<number | string, never>>(regularObservables$)
+
+  const effectObservables$ = merge(
+    null as any as EffectObservable<1, 2>,
+    null as any as EffectObservable<2, 3>,
+  )
+  expectType<EffectObservable<1 | 2, 2 | 3>>(effectObservables$)
+
+  const mixedEffectRegular$ = merge(
+    of(1 as const),
+    null as any as EffectObservable<2, 3>,
+  )
+  expectType<EffectObservable<1 | 2, 3>>(mixedEffectRegular$)
+
+  const stateObservables$ = merge(
+    null as any as StateObservable<1, 2>,
+    null as any as DefaultedStateObservable<2, 3>,
+  )
+  expectType<EffectObservable<1 | 2, 2 | 3>>(stateObservables$)
+
+  const mixedAll$ = merge(
+    of(1 as const),
+    null as any as EffectObservable<2, 3>,
+    null as any as StateObservable<1, 2>,
+  )
+  expectType<EffectObservable<1 | 2, 2 | 3>>(mixedAll$)
 }

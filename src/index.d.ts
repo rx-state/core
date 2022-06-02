@@ -105,8 +105,21 @@ export function liftEffects<Args extends Array<unknown>, T>(
 export declare const SUSPENSE: unique symbol
 export declare type SUSPENSE = typeof SUSPENSE
 
-/// StateObservable
+/// operator overrides
+declare module "rxjs" {
+  function merge<Args extends EffectObservable<unknown, unknown>[]>(
+    ...sources: Args
+  ): Args extends Array<EffectObservable<infer T, infer E>>
+    ? EffectObservable<T, unknown extends E ? never : E>
+    : never
+  function merge<Args extends EffectObservable<unknown, unknown>[]>(
+    ...sourcesAndConcurrency: [...Args, number?]
+  ): Args extends Array<EffectObservable<infer T, infer E>>
+    ? EffectObservable<T, unknown extends E ? never : E>
+    : never
+}
 
+/// StateObservable
 export declare class StatePromise<T> extends Promise<T> {
   constructor(cb: (res: (value: T) => void, rej: any) => void)
 }
@@ -253,11 +266,16 @@ export interface DefaultedStateObservable<T, E> extends StateObservable<T, E> {
   getDefaultValue: () => T
 }
 
-export interface WithDefaultOperator<T, R>
-  extends UnaryFunction<Observable<T>, DefaultedStateObservable<T | R, any>> {}
+export interface WithDefaultOperator<T, D>
+  extends UnaryFunction<
+    Observable<T>,
+    DefaultedStateObservable<T | D, never>
+  > {}
 export declare function withDefault<T, D>(
   defaultValue: D,
-): WithDefaultOperator<T, D>
+): <E = never>(
+  source$: EffectObservable<T, E> | Observable<T>,
+) => DefaultedStateObservable<T | D, E>
 
 export declare class NoSubscribersError extends Error {
   constructor()
