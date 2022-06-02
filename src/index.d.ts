@@ -1,6 +1,6 @@
 import type { Observable, UnaryFunction } from "rxjs"
 
-interface EffectOperatorFunction<T, ET, R, ER>
+interface EffectOperatorFunction<T, R, ET, ER>
   extends UnaryFunction<EffectObservable<T, ET>, EffectObservable<R, ER>> {}
 
 // prettier-ignore
@@ -8,130 +8,130 @@ export interface PipeState<T, ET> {
   <A>(
     defaultOp: WithDefaultOperator<T, A>,
   ): DefaultedStateObservable<T | A, ET>
-  <A, EA = ET, B = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
+  <A, B, EA = ET>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
     defaultOp: WithDefaultOperator<A, B>,
   ): DefaultedStateObservable<A | B, EA>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
+  <A, B, C, EA = ET, EB = EA>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
     defaultOp: WithDefaultOperator<B, C>,
   ): DefaultedStateObservable<B | C, EB>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
+  <A, B, C, D, EA = ET, EB = EA, EC = EB>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
     defaultOp: WithDefaultOperator<C, D>,
   ): DefaultedStateObservable<C | D, EC>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
+  <A, B, C, D, E, EA = ET, EB = EA, EC = EB, ED = EC>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
     defaultOp: WithDefaultOperator<D, E>,
   ): DefaultedStateObservable<D | E, ED>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
+  <A, B, C, D, E, F, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
     defaultOp: WithDefaultOperator<E, F>,
   ): DefaultedStateObservable<E | F, EE>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
+  <A, B, C, D, E, F, G, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
     defaultOp: WithDefaultOperator<F, G>,
   ): DefaultedStateObservable<F | G, EF>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
+  <A, B, C, D, E, F, G, H, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
     defaultOp: WithDefaultOperator<G, H>,
   ): DefaultedStateObservable<G | H, EG>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
-    op8: EffectOperatorFunction<G, EG, H, EH>,
+  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
     defaultOp: WithDefaultOperator<H, I>,
   ): DefaultedStateObservable<H | I, EH>
- 
+
   (): StateObservable<T, ET>
   <A, EA = ET>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op1: EffectOperatorFunction<T, A, ET, EA>,
   ): StateObservable<A, EA>
-  <A, EA = ET, B = unknown, EB = EA>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
+  <A, B, EA = ET, EB = EA>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
   ): StateObservable<B, EB>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
+  <A, B, C, EA = ET, EB = EA, EC = EB>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
   ): StateObservable<C, EC>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
+  <A, B, C, D, EA = ET, EB = EA, EC = EB, ED = EC>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
   ): StateObservable<D, ED>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
+  <A, B, C, D, E, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
   ): StateObservable<E, EE>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
+  <A, B, C, D, E, F, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
   ): StateObservable<F, EF>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
+  <A, B, C, D, E, F, G, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
   ): StateObservable<G, EG>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
-    op8: EffectOperatorFunction<G, EG, H, EH>,
+  <A, B, C, D, E, F, G, H, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
   ): StateObservable<H, EH>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown, EI = EH>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
-    op8: EffectOperatorFunction<G, EG, H, EH>,
-    op9: EffectOperatorFunction<H, EH, I, EI>,
+  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG, EI = EH>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
+    op9: EffectOperatorFunction<H, I, EH, EI>,
   ): StateObservable<I, EI>
 }
 
@@ -139,67 +139,67 @@ export interface PipeState<T, ET> {
 export interface PipeEffect<T, ET> {
   (): EffectObservable<T, ET>
   <A, EA = ET>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
+    op1: EffectOperatorFunction<T, A, ET, EA>,
   ): EffectObservable<A, EA>
-  <A, EA = ET, B = unknown, EB = EA>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
+  <A, B, EA = ET, EB = EA>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
   ): EffectObservable<B, EB>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
+  <A, B, C, EA = ET, EB = EA, EC = EB>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
   ): EffectObservable<C, EC>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
+  <A, B, C, D, EA = ET, EB = EA, EC = EB, ED = EC>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
   ): EffectObservable<D, ED>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
+  <A, B, C, D, E, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
   ): EffectObservable<E, EE>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
+  <A, B, C, D, E, F, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
   ): EffectObservable<F, EF>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
+  <A, B, C, D, E, F, G, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
   ): EffectObservable<G, EG>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
-    op8: EffectOperatorFunction<G, EG, H, EH>,
+  <A, B, C, D, E, F, G, H, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
   ): EffectObservable<H, EH>
-  <A, EA = ET, B = unknown, EB = EA, C = unknown, EC = EB, D = unknown, ED = EC, E = unknown, EE = ED, F = unknown, EF = EE, G = unknown, EG = EF, H = unknown, EH = EG, I = unknown, EI = EH>(
-    op1: EffectOperatorFunction<T, ET, A, EA>,
-    op2: EffectOperatorFunction<A, EA, B, EB>,
-    op3: EffectOperatorFunction<B, EB, C, EC>,
-    op4: EffectOperatorFunction<C, EC, D, ED>,
-    op5: EffectOperatorFunction<D, ED, E, EE>,
-    op6: EffectOperatorFunction<E, EE, F, EF>,
-    op7: EffectOperatorFunction<F, EF, G, EG>,
-    op8: EffectOperatorFunction<G, EG, H, EH>,
-    op9: EffectOperatorFunction<H, EH, I, EI>,
+  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG, EI = EH>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
+    op9: EffectOperatorFunction<H, I, EH, EI>,
   ): EffectObservable<I, EI>
 }
 
