@@ -154,7 +154,7 @@ export declare function sinkEffects<Args extends Array<any>>(
 
 export function liftEffects(): <T, E>(
   source$: EffectObservable<T, E>,
-) => EffectObservable<IsEmpty<E> extends true ? T : T | E, never>
+) => EffectObservable<T | E, never>
 export function liftEffects<Args extends Array<unknown>>(
   ...args: Args
 ): <T, E>(
@@ -174,7 +174,9 @@ export declare class StatePromise<T> extends Promise<T> {
   constructor(cb: (res: (value: T) => void, rej: any) => void)
 }
 
-interface EffectObservable<T, E> extends Observable<T> {}
+interface EffectObservable<T, E> extends Observable<T> {
+  _inner?: E
+}
 export interface StateObservable<T, E> extends EffectObservable<T, E> {
   getRefCount: () => number
   getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
