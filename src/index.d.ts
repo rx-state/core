@@ -1,4 +1,4 @@
-import type { Observable, UnaryFunction } from "rxjs"
+import type { Observable, ObservedValueOf, UnaryFunction } from "rxjs"
 
 /// Effects
 export declare class Effect<T> {
@@ -148,6 +148,16 @@ declare module "rxjs" {
     sources: readonly [...A],
     resultSelector: (...values: TupleToValue<A>) => R,
   ): EffectObservable<R, TupleToEffects<A>>
+  export function combineLatest<
+    T extends Record<string, EffectObservable<any, any>>,
+  >(
+    sourcesObject: T,
+  ): EffectObservable<
+    { [K in keyof T]: ObservedValueOf<T[K]> },
+    T[keyof T] extends EffectObservable<any, infer R>
+      ? ExcludeUnknown<R>
+      : never
+  >
 }
 
 /// StateObservable

@@ -213,3 +213,48 @@ import {
     >
   >(mixedWithSelector$)
 }
+
+// combineLatest - object
+{
+  const regularObservables$ = combineLatest({
+    number: of(1),
+    string: of("string"),
+  })
+  expectType<EffectObservable<{ number: number; string: string }, never>>(
+    regularObservables$,
+  )
+
+  const effectObservables$ = combineLatest({
+    one: null as any as EffectObservable<1, 2>,
+    two: null as any as EffectObservable<2, 3>,
+  })
+  expectType<EffectObservable<{ one: 1; two: 2 }, 2 | 3>>(effectObservables$)
+
+  const mixedEffectRegular$ = combineLatest({
+    one: of(1 as const),
+    two: null as any as EffectObservable<2, 3>,
+  })
+  expectType<EffectObservable<{ one: 1; two: 2 }, 3>>(mixedEffectRegular$)
+
+  const stateObservables$ = combineLatest({
+    one: null as any as StateObservable<1, 2>,
+    two: null as any as DefaultedStateObservable<2, 3>,
+  })
+  expectType<EffectObservable<{ one: 1; two: 2 }, 2 | 3>>(stateObservables$)
+
+  const mixedAll$ = combineLatest({
+    one: of(1 as const),
+    two: null as any as EffectObservable<2, 3>,
+    secondOne: null as any as StateObservable<1, 2>,
+  })
+  expectType<
+    EffectObservable<
+      {
+        one: 1
+        two: 2
+        secondOne: 1
+      },
+      2 | 3
+    >
+  >(mixedAll$)
+}
