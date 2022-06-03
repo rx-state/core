@@ -71,6 +71,18 @@ interface PipeEffect<T, ET> {
     op8: EffectOperatorFunction<G, H, EG, EH>,
     op9: EffectOperatorFunction<H, I, EH, EI>,
   ): EffectObservable<I, EI>
+  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG, EI = EH>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
+    op9: EffectOperatorFunction<H, I, EH, EI>,
+    ...operations: EffectOperatorFunction<any, any, any, any>[]
+  ): EffectObservable<unknown, unknown>
 }
 
 export interface EffectObservable<T, E> extends Observable<T> {
@@ -106,17 +118,36 @@ export declare const SUSPENSE: unique symbol
 export declare type SUSPENSE = typeof SUSPENSE
 
 /// operator overrides
+type ExcludeUnknown<T> = unknown extends T ? never : T
 declare module "rxjs" {
   function merge<Args extends EffectObservable<unknown, unknown>[]>(
     ...sources: Args
   ): Args extends Array<EffectObservable<infer T, infer E>>
-    ? EffectObservable<T, unknown extends E ? never : E>
+    ? EffectObservable<T, ExcludeUnknown<E>>
     : never
   function merge<Args extends EffectObservable<unknown, unknown>[]>(
     ...sourcesAndConcurrency: [...Args, number?]
   ): Args extends Array<EffectObservable<infer T, infer E>>
-    ? EffectObservable<T, unknown extends E ? never : E>
+    ? EffectObservable<T, ExcludeUnknown<E>>
     : never
+
+  type TupleToValue<A> = {
+    [K in keyof A]: A[K] extends EffectObservable<infer R, any> ? R : never
+  }
+  type TupleToEffects<A extends any[]> = A[number] extends EffectObservable<
+    any,
+    infer R
+  >
+    ? ExcludeUnknown<R>
+    : never
+
+  function combineLatest<A extends EffectObservable<unknown, unknown>[]>(
+    sources: readonly [...A],
+  ): EffectObservable<TupleToValue<A>, TupleToEffects<A>>
+  function combineLatest<A extends EffectObservable<unknown, unknown>[], R>(
+    sources: readonly [...A],
+    resultSelector: (...values: TupleToValue<A>) => R,
+  ): EffectObservable<R, TupleToEffects<A>>
 }
 
 /// StateObservable
@@ -254,6 +285,18 @@ interface PipeState<T, ET> {
     op8: EffectOperatorFunction<G, H, EG, EH>,
     op9: EffectOperatorFunction<H, I, EH, EI>,
   ): StateObservable<I, EI>
+  <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG, EI = EH>(
+    op1: EffectOperatorFunction<T, A, ET, EA>,
+    op2: EffectOperatorFunction<A, B, EA, EB>,
+    op3: EffectOperatorFunction<B, C, EB, EC>,
+    op4: EffectOperatorFunction<C, D, EC, ED>,
+    op5: EffectOperatorFunction<D, E, ED, EE>,
+    op6: EffectOperatorFunction<E, F, EE, EF>,
+    op7: EffectOperatorFunction<F, G, EF, EG>,
+    op8: EffectOperatorFunction<G, H, EG, EH>,
+    op9: EffectOperatorFunction<H, I, EH, EI>,
+    ...operations: EffectOperatorFunction<any, any, any, any>[]
+  ): StateObservable<unknown, unknown>
 }
 
 export interface StateObservable<T, E> extends EffectObservable<T, E> {

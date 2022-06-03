@@ -1,4 +1,4 @@
-import { from, map, Observable, filter, merge, of } from "rxjs"
+import { from, map, Observable, filter, merge, of, combineLatest } from "rxjs"
 import { expectAssignable, expectNotAssignable, expectType } from "tsd"
 import {
   DefaultedStateObservable,
@@ -162,4 +162,54 @@ import {
     null as any as StateObservable<1, 2>,
   )
   expectType<EffectObservable<1 | 2, 2 | 3>>(mixedAll$)
+}
+
+// combineLatest - tuple
+{
+  const regularObservables$ = combineLatest([of(1), of("string")])
+  expectType<EffectObservable<[number, string], never>>(regularObservables$)
+
+  const effectObservables$ = combineLatest([
+    null as any as EffectObservable<1, 2>,
+    null as any as EffectObservable<2, 3>,
+  ])
+  expectType<EffectObservable<[1, 2], 2 | 3>>(effectObservables$)
+
+  const mixedEffectRegular$ = combineLatest([
+    of(1 as const),
+    null as any as EffectObservable<2, 3>,
+  ])
+  expectType<EffectObservable<[1, 2], 3>>(mixedEffectRegular$)
+
+  const stateObservables$ = combineLatest([
+    null as any as StateObservable<1, 2>,
+    null as any as DefaultedStateObservable<2, 3>,
+  ])
+  expectType<EffectObservable<[1, 2], 2 | 3>>(stateObservables$)
+
+  const mixedAll$ = combineLatest([
+    of(1 as const),
+    null as any as EffectObservable<2, 3>,
+    null as any as StateObservable<1, 2>,
+  ])
+  expectType<EffectObservable<[1, 2, 1], 2 | 3>>(mixedAll$)
+
+  const mixedWithSelector$ = combineLatest(
+    [
+      of(1 as const),
+      null as any as EffectObservable<2, 3>,
+      null as any as StateObservable<1, 2>,
+    ],
+    (one, two, secondOne) => ({ one, two, secondOne }),
+  )
+  expectType<
+    EffectObservable<
+      {
+        one: 1
+        two: 2
+        secondOne: 1
+      },
+      2 | 3
+    >
+  >(mixedWithSelector$)
 }

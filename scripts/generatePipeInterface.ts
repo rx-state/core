@@ -56,28 +56,35 @@ function generatePipeInterface(limit = 9) {
     "E" + intrinsicGenerics[intrinsicGenerics.length - 2],
   ])}`
   }
-  const regularOverload = (generics: string[]) => {
+  const regularOverload = (generics: string[], rest = false) => {
     if (generics.length === 0) {
       return `  (): StateObservable<T, ET>`
     }
 
     const intrinsicGenerics = ["T", ...generics]
 
-    const parameters = new Array(generics.length)
-      .fill(0)
-      .map((_, i) => {
-        const paramGenerics = createOperatorEffectGenerics(
-          intrinsicGenerics.slice(i, i + 2),
-        )
+    const parameters = new Array(generics.length).fill(0).map((_, i) => {
+      const paramGenerics = createOperatorEffectGenerics(
+        intrinsicGenerics.slice(i, i + 2),
+      )
 
-        return operator(paramGenerics, i)
-      })
-      .join("\n    ")
+      return operator(paramGenerics, i)
+    })
+
+    if (rest) {
+      parameters.push(
+        `...operations: EffectOperatorFunction<any, any, any, any>[]`,
+      )
+    }
 
     const lastGeneric = intrinsicGenerics[intrinsicGenerics.length - 1]
+    const resultTypes = rest
+      ? ["unknown", "unknown"]
+      : [lastGeneric, `E${lastGeneric}`]
+
     return `  ${opening(createFunctionEffectGenerics(generics))}
-    ${parameters}
-  ${closing("StateObservable", [lastGeneric, `E${lastGeneric}`])}`
+    ${parameters.join("\n    ")}
+  ${closing("StateObservable", resultTypes)}`
   }
 
   const defaultOverloads = new Array(limit)
@@ -89,10 +96,15 @@ function generatePipeInterface(limit = 9) {
     .map((_, i) => regularOverload(genericsSequence.slice(0, i)))
     .join("\n")
 
+  // pipe redefinition must match the original one to correctly infer between StateObservable into Observable.
+  // otherwise `combineLatest([stateObservable, of(1)]) => Observable<[unknown, number]>
+  const restOverload = regularOverload(genericsSequence.slice(0, limit), true)
+
   return `export interface PipeState<T, ET> {
 ${defaultOverloads}
  
 ${regularOverloads}
+${restOverload}
 }`
 }
 
