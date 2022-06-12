@@ -1,4 +1,14 @@
-import { from, map, Observable, filter, merge, of, combineLatest } from "rxjs"
+import {
+  from,
+  map,
+  Observable,
+  filter,
+  merge,
+  of,
+  combineLatest,
+  startWith,
+  OperatorFunction,
+} from "rxjs"
 import { expectAssignable, expectNotAssignable, expectType } from "tsd"
 import {
   DefaultedStateObservable,
@@ -7,6 +17,7 @@ import {
   sinkEffects,
   StateObservable,
   withDefault,
+  WithDefaultOperator,
 } from "./index.d"
 
 // Regular Observable
@@ -87,6 +98,12 @@ import {
   const noOperator$ = source$.pipe()
   expectType<StateObservable<1 | 2, 3>>(noOperator$)
 
+  // withDefault operator
+  const operator = withDefault<number, "default">("default")
+  expectAssignable<WithDefaultOperator<number, number | "default">>(operator)
+  expectAssignable<OperatorFunction<number, number | "default">>(operator)
+  expectNotAssignable<WithDefaultOperator<any, any>>(startWith<1 | 2>(null))
+
   const withDefaultAtEnd$ = source$.pipe(
     map((v) => v),
     withDefault("default"),
@@ -131,6 +148,12 @@ import {
     filter((v) => v < 10),
   )
   expectType<StateObservable<1 | string, 3>>(filterSinkMapLift$)
+
+  const operatorThatAdds$ = source$.pipe(startWith(null))
+  expectType<StateObservable<1 | 2 | null, 3>>(operatorThatAdds$)
+
+  const operatorThatReadds$ = operatorThatAdds$.pipe(startWith(null)) // This used to use the `defaultOperator` overload
+  expectType<StateObservable<1 | 2 | null, 3>>(operatorThatReadds$)
 }
 
 // merge

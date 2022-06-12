@@ -169,29 +169,29 @@ export declare class StatePromise<T> extends Promise<T> {
 interface PipeState<T, ET> {
   <A>(
     defaultOp: WithDefaultOperator<T, A>,
-  ): DefaultedStateObservable<T | A, ET>
+  ): DefaultedStateObservable<A, ET>
   <A, B, EA = ET>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     defaultOp: WithDefaultOperator<A, B>,
-  ): DefaultedStateObservable<A | B, EA>
+  ): DefaultedStateObservable<B, EA>
   <A, B, C, EA = ET, EB = EA>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
     defaultOp: WithDefaultOperator<B, C>,
-  ): DefaultedStateObservable<B | C, EB>
+  ): DefaultedStateObservable<C, EB>
   <A, B, C, D, EA = ET, EB = EA, EC = EB>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
     op3: EffectOperatorFunction<B, C, EB, EC>,
     defaultOp: WithDefaultOperator<C, D>,
-  ): DefaultedStateObservable<C | D, EC>
+  ): DefaultedStateObservable<D, EC>
   <A, B, C, D, E, EA = ET, EB = EA, EC = EB, ED = EC>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
     op3: EffectOperatorFunction<B, C, EB, EC>,
     op4: EffectOperatorFunction<C, D, EC, ED>,
     defaultOp: WithDefaultOperator<D, E>,
-  ): DefaultedStateObservable<D | E, ED>
+  ): DefaultedStateObservable<E, ED>
   <A, B, C, D, E, F, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
@@ -199,7 +199,7 @@ interface PipeState<T, ET> {
     op4: EffectOperatorFunction<C, D, EC, ED>,
     op5: EffectOperatorFunction<D, E, ED, EE>,
     defaultOp: WithDefaultOperator<E, F>,
-  ): DefaultedStateObservable<E | F, EE>
+  ): DefaultedStateObservable<F, EE>
   <A, B, C, D, E, F, G, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
@@ -208,7 +208,7 @@ interface PipeState<T, ET> {
     op5: EffectOperatorFunction<D, E, ED, EE>,
     op6: EffectOperatorFunction<E, F, EE, EF>,
     defaultOp: WithDefaultOperator<F, G>,
-  ): DefaultedStateObservable<F | G, EF>
+  ): DefaultedStateObservable<G, EF>
   <A, B, C, D, E, F, G, H, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
@@ -218,7 +218,7 @@ interface PipeState<T, ET> {
     op6: EffectOperatorFunction<E, F, EE, EF>,
     op7: EffectOperatorFunction<F, G, EF, EG>,
     defaultOp: WithDefaultOperator<G, H>,
-  ): DefaultedStateObservable<G | H, EG>
+  ): DefaultedStateObservable<H, EG>
   <A, B, C, D, E, F, G, H, I, EA = ET, EB = EA, EC = EB, ED = EC, EE = ED, EF = EE, EG = EF, EH = EG>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
     op2: EffectOperatorFunction<A, B, EA, EB>,
@@ -229,7 +229,7 @@ interface PipeState<T, ET> {
     op7: EffectOperatorFunction<F, G, EF, EG>,
     op8: EffectOperatorFunction<G, H, EG, EH>,
     defaultOp: WithDefaultOperator<H, I>,
-  ): DefaultedStateObservable<H | I, EH>
+  ): DefaultedStateObservable<I, EH>
 
   (): StateObservable<T, ET>
   <A, EA = ET>(
@@ -320,10 +320,7 @@ export interface DefaultedStateObservable<T, E> extends StateObservable<T, E> {
 }
 
 export interface WithDefaultOperator<T, D>
-  extends UnaryFunction<
-    Observable<T>,
-    DefaultedStateObservable<T | D, never>
-  > {}
+  extends UnaryFunction<Observable<T>, DefaultedStateObservable<D, never>> {}
 export declare function withDefault<T, D>(
   defaultValue: D,
 ): <E = never>(
@@ -356,11 +353,11 @@ type StateObservableInput<T, E> =
  * subscription, then the state Observable will synchronously emit the
  * defaultValue if present.
  */
-export declare function state<T, E>(
+export declare function state<T, E = never>(
   observable: StateObservableInput<T, E>,
   defaultValue: T,
 ): DefaultedStateObservable<T, E>
-export declare function state<T, E>(
+export declare function state<T, E = never>(
   observable: StateObservableInput<T, E>,
 ): StateObservable<T, E>
 /**
