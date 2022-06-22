@@ -402,7 +402,7 @@ describe("stateSingle", () => {
     })
   })
 
-  describe("pipe", () => {
+  describe("pipeState", () => {
     it("returns a new state observable", () => {
       scheduler().run(({ expectObservable, cold }) => {
         const source = cold("a-b-c-d-e")
@@ -411,7 +411,7 @@ describe("stateSingle", () => {
         const expectedA = "  a-b-c"
         const expectedB = "  ---bc-d-e"
 
-        const shared = state(source).pipe(scan((acc, v) => acc + v, ""))
+        const shared = state(source).pipeState(scan((acc, v) => acc + v, ""))
 
         const values = {
           a: "a",

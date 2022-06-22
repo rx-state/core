@@ -95,7 +95,7 @@ import {
   )
   expectNotAssignable<DefaultedStateObservable<2, 3>>(source$)
 
-  const noOperator$ = source$.pipe()
+  const noOperator$ = source$.pipeState()
   expectType<StateObservable<1 | 2, 3>>(noOperator$)
 
   // withDefault operator
@@ -104,13 +104,13 @@ import {
   expectAssignable<OperatorFunction<number, number | "default">>(operator)
   expectNotAssignable<WithDefaultOperator<any, any>>(startWith<1 | 2>(null))
 
-  const withDefaultAtEnd$ = source$.pipe(
+  const withDefaultAtEnd$ = source$.pipeState(
     map((v) => v),
     withDefault("default"),
   )
   expectType<DefaultedStateObservable<1 | 2 | string, 3>>(withDefaultAtEnd$)
 
-  const withDefaultAtMiddle$ = source$.pipe(
+  const withDefaultAtMiddle$ = source$.pipeState(
     map((v) => v),
     withDefault("default"),
     map((v) => v),
@@ -118,29 +118,32 @@ import {
   expectType<StateObservable<1 | 2 | string, 3>>(withDefaultAtMiddle$)
 
   // Pipe with effects
-  const onlySink$ = source$.pipe(sinkEffects(1 as const))
+  const onlySink$ = source$.pipeState(sinkEffects(1 as const))
   expectType<StateObservable<2, 1 | 3>>(onlySink$)
 
-  const onlyLift$ = source$.pipe(liftEffects())
+  const onlyLift$ = source$.pipeState(liftEffects())
   expectType<StateObservable<1 | 2 | 3, never>>(onlyLift$)
 
-  const sinkExplicitLift$ = source$.pipe(
+  const sinkExplicitLift$ = source$.pipeState(
     sinkEffects(1 as const),
     liftEffects(1 as const),
   )
   expectType<StateObservable<1 | 2, 3>>(sinkExplicitLift$)
 
-  const sinkImplicitLift$ = source$.pipe(sinkEffects(1 as const), liftEffects())
+  const sinkImplicitLift$ = source$.pipeState(
+    sinkEffects(1 as const),
+    liftEffects(),
+  )
   expectType<StateObservable<1 | 2 | 3, never>>(sinkImplicitLift$)
 
-  const sinkMapLift$ = source$.pipe(
+  const sinkMapLift$ = source$.pipeState(
     sinkEffects(1 as const),
     map((v) => `${v}`),
     liftEffects(1 as const),
   )
   expectType<StateObservable<1 | string, 3>>(sinkMapLift$)
 
-  const filterSinkMapLift$ = source$.pipe(
+  const filterSinkMapLift$ = source$.pipeState(
     filter((v) => v < 10),
     sinkEffects(1 as const),
     map((v) => `${v}`),
@@ -149,10 +152,10 @@ import {
   )
   expectType<StateObservable<1 | string, 3>>(filterSinkMapLift$)
 
-  const operatorThatAdds$ = source$.pipe(startWith(null))
+  const operatorThatAdds$ = source$.pipeState(startWith(null))
   expectType<StateObservable<1 | 2 | null, 3>>(operatorThatAdds$)
 
-  const operatorThatReadds$ = operatorThatAdds$.pipe(startWith(null)) // This used to use the `defaultOperator` overload
+  const operatorThatReadds$ = operatorThatAdds$.pipeState(startWith(null)) // This used to use the `defaultOperator` overload
   expectType<StateObservable<1 | 2 | null, 3>>(operatorThatReadds$)
 }
 

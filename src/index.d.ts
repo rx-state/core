@@ -230,7 +230,7 @@ interface PipeState<T, ET> {
     op8: EffectOperatorFunction<G, H, EG, EH>,
     defaultOp: WithDefaultOperator<H, I>,
   ): DefaultedStateObservable<I, EH>
-
+ 
   (): StateObservable<T, ET>
   <A, EA = ET>(
     op1: EffectOperatorFunction<T, A, ET, EA>,
@@ -312,7 +312,7 @@ interface PipeState<T, ET> {
 export interface StateObservable<T, E> extends EffectObservable<T, E> {
   getRefCount: () => number
   getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
-  pipe: PipeState<T, E>
+  pipeState: PipeState<T, E>
 }
 export interface DefaultedStateObservable<T, E> extends StateObservable<T, E> {
   getValue: () => Exclude<T, SUSPENSE>

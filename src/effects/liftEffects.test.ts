@@ -125,7 +125,7 @@ describe("liftEffects", () => {
     const errors = new Array<any>()
     test$.subscribe(
       (x) => {
-        values.push(x)
+        values.push(x as any)
       },
       (e) => {
         errors.push(e instanceof Effect ? e.value : e)

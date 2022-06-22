@@ -52,7 +52,7 @@ function generatePipeInterface(limit = 9) {
     return `  ${opening(openingGenerics)}
     ${parameters}
   ${closing("DefaultedStateObservable", [
-    intrinsicGenerics.slice(-2).join(" | "),
+    intrinsicGenerics[intrinsicGenerics.length - 1],
     "E" + intrinsicGenerics[intrinsicGenerics.length - 2],
   ])}`
   }
