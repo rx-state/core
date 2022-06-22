@@ -15,6 +15,7 @@ import {
   EffectObservable,
   liftEffects,
   sinkEffects,
+  state,
   StateObservable,
   withDefault,
   WithDefaultOperator,
@@ -157,6 +158,31 @@ import {
 
   const operatorThatReadds$ = operatorThatAdds$.pipeState(startWith(null)) // This used to use the `defaultOperator` overload
   expectType<StateObservable<1 | 2 | null, 3>>(operatorThatReadds$)
+}
+
+// state
+{
+  const observable$: Observable<1 | 2> = null as any
+  const stateFromObservable$ = state(observable$)
+  expectType<StateObservable<1 | 2, never>>(stateFromObservable$)
+  const stateFactoryFromObservable$ = state(() => observable$)
+  expectType<StateObservable<1 | 2, never>>(stateFactoryFromObservable$())
+
+  const effectObservable$: EffectObservable<1 | 2, 3 | 4> = null as any
+  const stateFromEffectObservable$ = state(effectObservable$)
+  expectType<StateObservable<1 | 2, 3 | 4>>(stateFromEffectObservable$)
+  const stateFactoryFromEffectObservable$ = state(() => effectObservable$)
+  expectType<StateObservable<1 | 2, 3 | 4>>(stateFactoryFromEffectObservable$())
+  const effectPipe$ = state(effectObservable$.pipe(map((v) => v)))
+  expectType<StateObservable<1 | 2, 3 | 4>>(effectPipe$)
+
+  const stateObservable$: StateObservable<1 | 2, 3 | 4> = null as any
+  const stateFromStateObservable$ = state(stateObservable$)
+  expectType<StateObservable<1 | 2, 3 | 4>>(stateFromStateObservable$)
+  const stateFactoryFromStateObservable$ = state(() => stateObservable$)
+  expectType<StateObservable<1 | 2, 3 | 4>>(stateFactoryFromStateObservable$())
+  const statePipe$ = state(stateObservable$.pipe(map((v) => v)))
+  expectType<StateObservable<1 | 2, 3 | 4>>(statePipe$)
 }
 
 // merge

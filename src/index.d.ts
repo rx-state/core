@@ -309,12 +309,13 @@ interface PipeState<T, ET> {
   ): StateObservable<unknown, unknown>
 }
 
-export interface StateObservable<T, E> extends EffectObservable<T, E> {
+export interface StateObservable<T, E = never> extends EffectObservable<T, E> {
   getRefCount: () => number
   getValue: () => Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>>
   pipeState: PipeState<T, E>
 }
-export interface DefaultedStateObservable<T, E> extends StateObservable<T, E> {
+export interface DefaultedStateObservable<T, E = never>
+  extends StateObservable<T, E> {
   getValue: () => Exclude<T, SUSPENSE>
   getDefaultValue: () => T
 }
@@ -334,11 +335,6 @@ export declare class EmptyObservableError extends Error {
   constructor()
 }
 
-type StateObservableInput<T, E> =
-  | EffectObservable<T, E>
-  | StateObservable<T, E>
-  | DefaultedStateObservable<T, E>
-
 /**
  * Creates a StateObservable
  *
@@ -354,11 +350,11 @@ type StateObservableInput<T, E> =
  * defaultValue if present.
  */
 export declare function state<T, E = never>(
-  observable: StateObservableInput<T, E>,
+  observable: EffectObservable<T, E>,
   defaultValue: T,
 ): DefaultedStateObservable<T, E>
 export declare function state<T, E = never>(
-  observable: StateObservableInput<T, E>,
+  observable: EffectObservable<T, E>,
 ): StateObservable<T, E>
 /**
  * Creates a factory of StateObservables
@@ -376,10 +372,10 @@ export declare function state<T, E = never>(
  * subscription, then the state Observable will synchronously emit the
  * defaultValue if present.
  */
-export declare function state<A extends unknown[], O, E>(
-  getObservable: (...args: A) => StateObservableInput<O, E>,
+export declare function state<A extends unknown[], O, E = never>(
+  getObservable: (...args: A) => EffectObservable<O, E>,
   defaultValue: O | ((...args: A) => O),
 ): (...args: A) => DefaultedStateObservable<O, E>
-export declare function state<A extends unknown[], O, E>(
-  getObservable: (...args: A) => StateObservableInput<O, E>,
+export declare function state<A extends unknown[], O, E = never>(
+  getObservable: (...args: A) => EffectObservable<O, E>,
 ): (...args: A) => StateObservable<O, E>
