@@ -43,15 +43,21 @@ export function state<T>(
  */
 export function state<A extends unknown[], O>(
   getObservable: (...args: A) => Observable<O>,
-): (...args: A) => StateObservable<O>
+): (...args: AddStopArg<A>) => StateObservable<O>
 
 export function state<A extends unknown[], O>(
   getObservable: (...args: A) => Observable<O>,
   defaultValue: O | ((...args: A) => O),
-): (...args: A) => DefaultedStateObservable<O>
+): (...args: AddStopArg<A>) => DefaultedStateObservable<O>
 
 export function state(observable: any, defaultValue?: any) {
   return (
     typeof observable === "function" ? (stateFactory as any) : stateSingle
   )(observable, arguments.length > 1 ? defaultValue : EMPTY_VALUE)
 }
+
+// Adds an additional "stop" argument to prevent using factory functions
+// inside high-order-functions directly (e.g. switchMap(factory$))
+type AddStopArg<A extends Array<any>> = number extends A["length"]
+  ? A
+  : [...args: A, _stop?: undefined]
