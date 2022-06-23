@@ -8,8 +8,15 @@ import {
   combineLatest,
   startWith,
   OperatorFunction,
+  EMPTY,
+  switchMap,
 } from "rxjs"
-import { expectAssignable, expectNotAssignable, expectType } from "tsd"
+import {
+  expectAssignable,
+  expectError,
+  expectNotAssignable,
+  expectType,
+} from "tsd"
 import {
   DefaultedStateObservable,
   EffectObservable,
@@ -183,6 +190,26 @@ import {
   expectType<StateObservable<1 | 2, 3 | 4>>(stateFactoryFromStateObservable$())
   const statePipe$ = state(stateObservable$.pipe(map((v) => v)))
   expectType<StateObservable<1 | 2, 3 | 4>>(statePipe$)
+
+  const string$ = from("abc")
+  const factory$ = state((_a: string) => EMPTY)
+  expectError(string$.pipe(switchMap(factory$)))
+  expectType<Observable<never>>(string$.pipe(switchMap((v) => factory$(v))))
+
+  const takesIndex$ = state((_a: string, _b: number) => EMPTY)
+  expectType<Observable<never>>(string$.pipe(switchMap(takesIndex$)))
+
+  const optionalFactory$ = state((_a: string, _b?: number) => EMPTY)
+  expectType<Observable<never>>(
+    string$.pipe(switchMap((v) => optionalFactory$(v))),
+  )
+  expectType<Observable<never>>(
+    string$.pipe(switchMap((v) => optionalFactory$(v, Number(v)))),
+  )
+
+  const variadicFactory$ = state((_b: number, ..._args: string[]) => EMPTY)
+  expectError(variadicFactory$(3, "a", undefined, "4"))
+  expectType<StateObservable<never>>(variadicFactory$(3, "a", "b", "c"))
 }
 
 // merge
