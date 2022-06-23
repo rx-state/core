@@ -375,7 +375,13 @@ export declare function state<T, E = never>(
 export declare function state<A extends unknown[], O, E = never>(
   getObservable: (...args: A) => EffectObservable<O, E>,
   defaultValue: O | ((...args: A) => O),
-): (...args: A) => DefaultedStateObservable<O, E>
+): (...args: AddStopArg<A>) => DefaultedStateObservable<O, E>
 export declare function state<A extends unknown[], O, E = never>(
   getObservable: (...args: A) => EffectObservable<O, E>,
-): (...args: A) => StateObservable<O, E>
+): (...args: AddStopArg<A>) => StateObservable<O, E>
+
+// Adds an additional "stop" argument to prevent using factory functions
+// inside high-order-functions directly (e.g. switchMap(factory$))
+type AddStopArg<A extends Array<any>> = number extends A["length"]
+  ? A
+  : [...args: A, _stop?: undefined]
