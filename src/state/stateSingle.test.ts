@@ -13,7 +13,15 @@ import {
 } from "rxjs"
 import { map, scan, startWith, take, tap, withLatestFrom } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { EmptyObservableError, NoSubscribersError, state, SUSPENSE } from "../"
+import {
+  liftEffects,
+  sinkEffects,
+  EmptyObservableError,
+  NoSubscribersError,
+  state,
+  SUSPENSE,
+  Effect,
+} from "../"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -437,6 +445,38 @@ describe("stateSingle", () => {
         sub.unsubscribe()
 
         await expect(value).rejects.toThrow(NoSubscribersError)
+      })
+
+      it("ignores effect errors if there are subscribers that are lifting them", async () => {
+        const subjet = new Subject<number>()
+
+        const source = subjet.pipe(sinkEffects(5 as const))
+        const sourceState = state(source)
+
+        sourceState.subscribe({ error() {} })
+        const value = sourceState.getValue()
+        sourceState.pipe(liftEffects()).subscribe()
+
+        subjet.next(5)
+        subjet.next(5)
+        subjet.next(5)
+        subjet.next(6)
+
+        await expect(value).resolves.toBe(6)
+      })
+
+      it("rejects effect errors if there aren't subscribers that are lifting them", async () => {
+        const subjet = new Subject<number>()
+        const source = subjet.pipe(sinkEffects(5 as const))
+        const sourceState = state(source)
+
+        sourceState.subscribe({ error() {} })
+        const value = sourceState.getValue() as Promise<any>
+        sourceState.subscribe({ error() {} })
+
+        subjet.next(5)
+
+        await expect(value).rejects.toEqual(new Effect(5))
       })
 
       it("always returns the same promise while the value is not emitted", () => {
