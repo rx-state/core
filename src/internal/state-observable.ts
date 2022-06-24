@@ -55,14 +55,19 @@ export default class StateObservable<T> extends Observable<T> {
           },
           error: (err: any) => {
             this.subscription = null
-            this.subject!.error(err)
+            const subject = this.subject
+            this.subject = null
+            subject!.error(err)
           },
           complete: () => {
             this.subscription = null
             if (this.currentValue !== EMPTY_VALUE)
               return this.subject!.complete()
-            if (defaultValue === EMPTY_VALUE)
-              return this.subject!.error(new EmptyObservableError())
+            if (defaultValue === EMPTY_VALUE) {
+              const subject = this.subject
+              this.subject = null
+              return subject!.error(new EmptyObservableError())
+            }
 
             this.subject!.next((this.currentValue = defaultValue))
             this.subject!.complete()

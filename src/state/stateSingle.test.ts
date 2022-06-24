@@ -1,17 +1,19 @@
-import { TestScheduler } from "rxjs/testing"
 import {
+  defer,
+  EMPTY,
+  firstValueFrom,
   from,
   merge,
-  defer,
-  Observable,
+  NEVER,
   noop,
-  Subject,
-  EMPTY,
+  Observable,
   of,
-  firstValueFrom,
+  Subject,
+  throwError,
 } from "rxjs"
-import { withLatestFrom, startWith, map, take, scan } from "rxjs/operators"
-import { state, SUSPENSE, EmptyObservableError, NoSubscribersError } from "../"
+import { map, scan, startWith, take, tap, withLatestFrom } from "rxjs/operators"
+import { TestScheduler } from "rxjs/testing"
+import { EmptyObservableError, NoSubscribersError, state, SUSPENSE } from "../"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -79,6 +81,95 @@ describe("stateSingle", () => {
         expectObservable(shared, sub1).toBe(expected1)
         expectObservable(shared, sub2).toBe(expected2)
       })
+    })
+
+    it("handles synchronous error retries", () => {
+      let nexts: number[] = []
+      let errors: string[] = []
+
+      let thrown = false
+      const result$ = state(
+        defer(() => {
+          if (!thrown) {
+            thrown = true
+            return throwError(() => "error")
+          }
+          return NEVER
+        }),
+      ).pipe(
+        tap({
+          error: (e) => {
+            errors.push(e)
+          },
+        }),
+      )
+
+      const subscribe = () =>
+        result$.subscribe({ next: (v) => nexts.push(v), error: subscribe })
+      subscribe()
+
+      expect(nexts).toEqual([])
+      expect(errors).toEqual(["error"])
+    })
+
+    it("cleans up the state when an error happens with reentrant subscribers", (done) => {
+      let nexts: number[] = []
+
+      let count = 0
+      const result$ = state(
+        new Observable<number>((obs) => {
+          if (count == 0)
+            setTimeout(() => {
+              obs.error("error")
+            })
+          obs.next(count++)
+        }),
+      )
+
+      const subscriber = () =>
+        result$.subscribe({
+          error: () => {
+            result$.subscribe({
+              next: (v) => nexts.push(v),
+            })
+          },
+        })
+      subscriber()
+      subscriber()
+      subscriber()
+
+      setTimeout(() => {
+        expect(nexts).toEqual([1, 1, 1])
+
+        done()
+      }, 100)
+    })
+
+    it("handles reentrant subscriptions on empty observable error", (done) => {
+      let firstSub = true
+      const result$ = state(
+        new Observable<string>((obs) => {
+          if (firstSub) {
+            firstSub = false
+            setTimeout(() => obs.complete())
+          } else {
+            obs.next("hey")
+          }
+        }),
+      )
+
+      let received: string
+      const subscribe = () =>
+        result$.subscribe({
+          next: (v) => (received = v),
+          error: subscribe,
+        })
+      subscribe()
+
+      setTimeout(() => {
+        expect(received).toBe("hey")
+        done()
+      }, 100)
     })
 
     it("errors when the source stream completes without having emitted", async () => {
