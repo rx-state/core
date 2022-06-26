@@ -33,6 +33,7 @@ export default function connectFactoryObservable<A extends [], O>(
     }
 
     const sharedObservable$ = new StateObservable(
+      // This defer breaks it. getObservable(...input) would work
       new Observable<O>((observer) =>
         getObservable(...input).subscribe(observer),
       ),

@@ -1,8 +1,9 @@
 import "expose-gc"
-import { defer, NEVER, Observable, of } from "rxjs"
+import { defer, NEVER, Observable, of, Subject } from "rxjs"
 import { map, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { state } from "./"
+import { sinkEffects, liftEffects } from "../effects"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -169,6 +170,7 @@ describe("stateFactory", () => {
         expect(error).toBeNull()
       })
 
+      // This test breaks without the defered observable with a "Maximum call stack size exceeded"
       it("does not crash when the factory function self-references its enhanced self", () => {
         let nSubscriptions = 0
         const me$ = state(
@@ -209,6 +211,25 @@ describe("stateFactory", () => {
         expect(nSubscriptions).toBe(2)
         sub3.unsubscribe()
       })
+    })
+
+    it("resubscribes to the same instance on synchronous retries", () => {
+      let instances = 0
+      const source$ = new Subject<number | null>()
+      const state$ = state(() => {
+        instances++
+        return source$.pipe(sinkEffects(null))
+      })
+
+      const sub = state$().pipe(liftEffects()).subscribe()
+
+      expect(instances).toBe(1)
+      source$.next(null)
+      expect(instances).toBe(1)
+      source$.next(1)
+      expect(instances).toBe(1)
+
+      sub.unsubscribe()
     })
   })
 
