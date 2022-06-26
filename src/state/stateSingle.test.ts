@@ -406,6 +406,42 @@ describe("stateSingle", () => {
         sub.unsubscribe()
       })
 
+      it("returns a promise if the latest emitted value was SUSPENSE", async () => {
+        const source = new Subject<number | SUSPENSE>()
+        const sourceState = state(source)
+        const sub = sourceState.subscribe()
+
+        source.next(1)
+        source.next(SUSPENSE)
+
+        const value = sourceState.getValue()
+        expect(value).toBeInstanceOf(Promise)
+
+        source.next(2)
+
+        await expect(value).resolves.toBe(2)
+
+        sub.unsubscribe()
+      })
+
+      it("returns a promise if nothing was emitted after an effect happens", async () => {
+        const source = new Subject<number | null>()
+        const sourceState = state(source.pipe(sinkEffects(null)))
+        const sub = sourceState.pipe(liftEffects()).subscribe()
+
+        source.next(1)
+        source.next(null)
+
+        const value = sourceState.getValue()
+        expect(value).toBeInstanceOf(Promise)
+
+        source.next(2)
+
+        await expect(value).resolves.toBe(2)
+
+        sub.unsubscribe()
+      })
+
       it("rejects the promise if the stream completes without emitting any value", async () => {
         const source = new Subject<number>()
         const sourceState = state(source)

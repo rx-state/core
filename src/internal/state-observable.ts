@@ -69,6 +69,7 @@ export default class StateObservable<T> extends Observable<T> {
             this.subscription = null
             const subject = this.subject
             this.subject = null
+            this.currentValue = EMPTY_VALUE
 
             const rej = this.promise?.rej
             if (this.promise && err instanceof Effect) {
