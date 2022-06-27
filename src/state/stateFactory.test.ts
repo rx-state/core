@@ -1,9 +1,10 @@
 import "expose-gc"
-import { defer, NEVER, Observable, of, Subject } from "rxjs"
+import { concat, defer, NEVER, Observable, of, Subject } from "rxjs"
 import { map, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { state } from "./"
 import { sinkEffects, liftEffects } from "../effects"
+import { StateObservable } from "../index.d"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -64,18 +65,54 @@ describe("stateFactory", () => {
       expect(getNumber$(6, undefined)).toBe(getNumber$(6))
     })
 
-    it("doesn't hold references to observables whose refcount reached zero", (done) => {
-      const registry = new FinalizationRegistry((value) => {
-        expect(value).toEqual("stateObservable")
-        done()
+    it("doesn't hold references to observables whose refcount reached zero", async () => {
+      let deferredRes: (val: string) => void = () => {}
+      const deferredP = new Promise<string>((res) => {
+        deferredRes = res
       })
+      const registry = new FinalizationRegistry(deferredRes)
 
       const stateFactory = state(() => NEVER)
       let observable: any = stateFactory()
-      registry.register(observable, "stateObservable")
-      observable.subscribe().unsubscribe()
+      registry.register(observable, "observable")
+      const subscription = observable.subscribe()
       observable = undefined
+
+      await Promise.resolve()
+      subscription.unsubscribe()
+
       global.gc!()
+
+      const value = await deferredP
+      expect(value).toBe("observable")
+    })
+
+    it("doesn't hold references to observables whose refcount reached zero, even when self-referenced through defer", async () => {
+      let deferredRes: (val: string) => void = () => {}
+      const deferredP = new Promise<string>((res) => {
+        deferredRes = res
+      })
+      const registry = new FinalizationRegistry(deferredRes)
+
+      const stateFactory: (x: number) => StateObservable<number> = state(
+        (x: number) =>
+          concat(
+            of(x),
+            defer(() => stateFactory(x)),
+          ),
+      )
+      let observable: any = stateFactory(1)
+      registry.register(observable, "observable")
+      const subscription = observable.subscribe()
+      observable = undefined
+
+      await Promise.resolve()
+      subscription.unsubscribe()
+
+      global.gc!()
+
+      const value = await deferredP
+      expect(value).toBe("observable")
     })
 
     describe("re-subscriptions on disposed observables", () => {
@@ -170,15 +207,16 @@ describe("stateFactory", () => {
         expect(error).toBeNull()
       })
 
-      // This test breaks without the defered observable with a "Maximum call stack size exceeded"
       it("does not crash when the factory function self-references its enhanced self", () => {
         let nSubscriptions = 0
         const me$ = state(
           (key: number): Observable<number> => {
             nSubscriptions++
-            return me$(key).pipe(
-              take(1),
-              map((x) => x * 2),
+            return defer(() =>
+              me$(key).pipe(
+                take(1),
+                map((x) => x * 2),
+              ),
             )
           },
           (key: number) => key,
