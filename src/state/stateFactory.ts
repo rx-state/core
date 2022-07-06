@@ -33,9 +33,7 @@ export default function connectFactoryObservable<A extends [], O>(
     }
 
     const sharedObservable$ = new StateObservable(
-      new Observable<O>((observer) =>
-        getObservable(...input).subscribe(observer),
-      ),
+      getObservable(...input),
       getDefaultValue(...input),
       () => {
         cache.delete(keys)

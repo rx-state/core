@@ -1,8 +1,10 @@
 import "expose-gc"
-import { defer, NEVER, Observable, of } from "rxjs"
+import { concat, defer, NEVER, Observable, of, Subject } from "rxjs"
 import { map, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import { state } from "./"
+import { sinkEffects, liftEffects } from "../effects"
+import { StateObservable } from "../index.d"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -63,18 +65,54 @@ describe("stateFactory", () => {
       expect(getNumber$(6, undefined)).toBe(getNumber$(6))
     })
 
-    it("doesn't hold references to observables whose refcount reached zero", (done) => {
-      const registry = new FinalizationRegistry((value) => {
-        expect(value).toEqual("stateObservable")
-        done()
+    it("doesn't hold references to observables whose refcount reached zero", async () => {
+      let deferredRes: (val: string) => void = () => {}
+      const deferredP = new Promise<string>((res) => {
+        deferredRes = res
       })
+      const registry = new FinalizationRegistry(deferredRes)
 
       const stateFactory = state(() => NEVER)
       let observable: any = stateFactory()
-      registry.register(observable, "stateObservable")
-      observable.subscribe().unsubscribe()
+      registry.register(observable, "observable")
+      const subscription = observable.subscribe()
       observable = undefined
+
+      await Promise.resolve()
+      subscription.unsubscribe()
+
       global.gc!()
+
+      const value = await deferredP
+      expect(value).toBe("observable")
+    })
+
+    it("doesn't hold references to observables whose refcount reached zero, even when self-referenced through defer", async () => {
+      let deferredRes: (val: string) => void = () => {}
+      const deferredP = new Promise<string>((res) => {
+        deferredRes = res
+      })
+      const registry = new FinalizationRegistry(deferredRes)
+
+      const stateFactory: (x: number) => StateObservable<number> = state(
+        (x: number) =>
+          concat(
+            of(x),
+            defer(() => stateFactory(x)),
+          ),
+      )
+      let observable: any = stateFactory(1)
+      registry.register(observable, "observable")
+      const subscription = observable.subscribe()
+      observable = undefined
+
+      await Promise.resolve()
+      subscription.unsubscribe()
+
+      global.gc!()
+
+      const value = await deferredP
+      expect(value).toBe("observable")
     })
 
     describe("re-subscriptions on disposed observables", () => {
@@ -174,9 +212,11 @@ describe("stateFactory", () => {
         const me$ = state(
           (key: number): Observable<number> => {
             nSubscriptions++
-            return me$(key).pipe(
-              take(1),
-              map((x) => x * 2),
+            return defer(() =>
+              me$(key).pipe(
+                take(1),
+                map((x) => x * 2),
+              ),
             )
           },
           (key: number) => key,
@@ -209,6 +249,25 @@ describe("stateFactory", () => {
         expect(nSubscriptions).toBe(2)
         sub3.unsubscribe()
       })
+    })
+
+    it("resubscribes to the same instance on synchronous retries", () => {
+      let instances = 0
+      const source$ = new Subject<number | null>()
+      const state$ = state(() => {
+        instances++
+        return source$.pipe(sinkEffects(null))
+      })
+
+      const sub = state$().pipe(liftEffects()).subscribe()
+
+      expect(instances).toBe(1)
+      source$.next(null)
+      expect(instances).toBe(1)
+      source$.next(1)
+      expect(instances).toBe(1)
+
+      sub.unsubscribe()
     })
   })
 
