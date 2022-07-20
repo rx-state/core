@@ -10,6 +10,10 @@ import {
   OperatorFunction,
   EMPTY,
   switchMap,
+  mergeMap,
+  concatMap,
+  exhaustMap,
+  withLatestFrom,
 } from "rxjs"
 import {
   expectAssignable,
@@ -354,4 +358,84 @@ import {
     switchMap((): EffectObservable<string, boolean> => of("asdf")),
   )
   expectType<EffectObservable<string, bigint | boolean>>(effectResult$)
+}
+
+// mergeMap
+{
+  const regularObservables$ = of(1).pipe(
+    mergeMap((): EffectObservable<string, bigint> => null as any),
+  )
+  expectType<Observable<string>>(regularObservables$)
+
+  const regularResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    mergeMap(() => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint>>(regularResult$)
+
+  const effectResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    mergeMap((): EffectObservable<string, boolean> => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint | boolean>>(effectResult$)
+}
+
+// concatMap
+{
+  const regularObservables$ = of(1).pipe(
+    concatMap((): EffectObservable<string, bigint> => null as any),
+  )
+  expectType<Observable<string>>(regularObservables$)
+
+  const regularResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    concatMap(() => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint>>(regularResult$)
+
+  const effectResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    concatMap((): EffectObservable<string, boolean> => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint | boolean>>(effectResult$)
+}
+
+// exhaustMap
+{
+  const regularObservables$ = of(1).pipe(
+    exhaustMap((): EffectObservable<string, bigint> => null as any),
+  )
+  expectType<Observable<string>>(regularObservables$)
+
+  const regularResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    exhaustMap(() => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint>>(regularResult$)
+
+  const effectResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    exhaustMap((): EffectObservable<string, boolean> => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint | boolean>>(effectResult$)
+}
+
+// withLatestFrom
+{
+  const effect$: EffectObservable<1 | 2, 3 | 4> = null as any
+  const effectString$: EffectObservable<"a" | "b", "c" | "d"> = null as any
+
+  const regularObservable$ = of("hello").pipe(withLatestFrom(effect$))
+  expectType<Observable<[string, 1 | 2]>>(regularObservable$)
+
+  const effectObservable$ = effect$.pipe(withLatestFrom(effectString$))
+  expectType<EffectObservable<[1 | 2, "a" | "b"], 3 | 4 | "c" | "d">>(
+    effectObservable$,
+  )
+
+  const projectFn$ = effect$.pipe(
+    withLatestFrom(effectString$, (a, b) => {
+      expectType<1 | 2>(a)
+      expectType<"a" | "b">(b)
+      return 3n
+    }),
+  )
+  expectType<EffectObservable<bigint, 3 | 4 | "c" | "d">>(projectFn$)
+
+  const regularLatestObs$ = effect$.pipe(withLatestFrom(of("hello")))
+  expectType<EffectObservable<[1 | 2, string], 3 | 4>>(regularLatestObs$)
 }
