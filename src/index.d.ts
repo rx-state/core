@@ -119,6 +119,9 @@ export declare type SUSPENSE = typeof SUSPENSE
 
 /// operator overrides
 type ExcludeUnknown<T> = unknown extends T ? never : T
+type EffectOf<T> = T extends EffectObservable<any, infer R>
+  ? ExcludeUnknown<R>
+  : never
 declare module "rxjs" {
   function merge<Args extends EffectObservable<unknown, unknown>[]>(
     ...sources: Args
@@ -132,14 +135,9 @@ declare module "rxjs" {
     : never
 
   type TupleToValue<A> = {
-    [K in keyof A]: A[K] extends EffectObservable<infer R, any> ? R : never
+    [K in keyof A]: ObservedValueOf<A[K]>
   }
-  type TupleToEffects<A extends any[]> = A[number] extends EffectObservable<
-    any,
-    infer R
-  >
-    ? ExcludeUnknown<R>
-    : never
+  type TupleToEffects<A extends any[]> = ExcludeUnknown<EffectOf<A[number]>>
 
   function combineLatest<A extends EffectObservable<unknown, unknown>[]>(
     sources: readonly [...A],
@@ -154,10 +152,25 @@ declare module "rxjs" {
     sourcesObject: T,
   ): EffectObservable<
     { [K in keyof T]: ObservedValueOf<T[K]> },
-    T[keyof T] extends EffectObservable<any, infer R>
-      ? ExcludeUnknown<R>
-      : never
+    EffectOf<T[keyof T]>
   >
+
+  export function switchMap<T, ET, O extends EffectObservable<any, any>>(
+    project: (value: T, index: number) => O,
+  ): EffectOperatorFunction<T, ObservedValueOf<O>, ET, ET | EffectOf<O>>
+
+  export function mergeMap<T, ET, O extends EffectObservable<any, any>>(
+    project: (value: T, index: number) => O,
+    concurrent?: number,
+  ): EffectOperatorFunction<T, ObservedValueOf<O>, ET, ET | EffectOf<O>>
+
+  export function exhaustMap<T, ET, O extends EffectObservable<any, any>>(
+    project: (value: T, index: number) => O,
+  ): EffectOperatorFunction<T, ObservedValueOf<O>, ET, ET | EffectOf<O>>
+
+  export function concatMap<T, ET, O extends EffectObservable<any, any>>(
+    project: (value: T, index: number) => O,
+  ): EffectOperatorFunction<T, ObservedValueOf<O>, ET, ET | EffectOf<O>>
 }
 
 /// StateObservable
