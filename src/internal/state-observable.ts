@@ -72,14 +72,14 @@ export default class StateObservable<T> extends Observable<T> {
             this.currentValue = EMPTY_VALUE
 
             const rej = this.promise?.rej
-            if (this.promise && err instanceof Effect) {
-              this.promise.rej = () => {
+            if (rej && err instanceof Effect) {
+              this.promise!.rej = () => {
                 rej!(err)
               }
             }
             subject!.error(err)
-            if (this.promise) {
-              this.promise.rej = rej!
+            if (rej && this.promise) {
+              this.promise.rej = rej
             }
           },
           complete: () => {

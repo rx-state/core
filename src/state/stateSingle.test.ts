@@ -515,6 +515,30 @@ describe("stateSingle", () => {
         await expect(value).rejects.toEqual(new Effect(5))
       })
 
+      it("handles re-entrant promises on Effect errors", async () => {
+        const subjet = new Subject<number>()
+        const source = subjet.pipe(sinkEffects(5 as const))
+        const sourceState = state(source)
+
+        let promise: any
+        sourceState.subscribe({
+          error() {
+            promise = sourceState.getValue()
+          },
+        })
+        const subscription = sourceState.pipeState(liftEffects()).subscribe({
+          next() {
+            Promise.resolve().then(() => {
+              subscription.unsubscribe()
+            })
+          },
+        })
+
+        subjet.next(5)
+
+        await expect(promise).rejects.toThrow(NoSubscribersError)
+      })
+
       it("always returns the same promise while the value is not emitted", () => {
         const source = new Subject<number>()
         const sourceState = state(source)
