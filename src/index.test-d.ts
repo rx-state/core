@@ -337,3 +337,21 @@ import {
     >
   >(mixedAll$)
 }
+
+// switchMap
+{
+  const regularObservables$ = of(1).pipe(
+    switchMap((): EffectObservable<string, bigint> => null as any),
+  )
+  expectType<Observable<string>>(regularObservables$)
+
+  const regularResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    switchMap(() => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint>>(regularResult$)
+
+  const effectResult$ = state(of(1) as EffectObservable<number, bigint>).pipe(
+    switchMap((): EffectObservable<string, boolean> => of("asdf")),
+  )
+  expectType<EffectObservable<string, bigint | boolean>>(effectResult$)
+}
