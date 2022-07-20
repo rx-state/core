@@ -171,6 +171,28 @@ declare module "rxjs" {
   export function concatMap<T, ET, O extends EffectObservable<any, any>>(
     project: (value: T, index: number) => O,
   ): EffectOperatorFunction<T, ObservedValueOf<O>, ET, ET | EffectOf<O>>
+
+  export function withLatestFrom<
+    T,
+    ET,
+    A extends EffectObservable<unknown, unknown>[],
+  >(
+    ...inputs: readonly [...A]
+  ): EffectOperatorFunction<
+    T,
+    [T, ...TupleToValue<A>],
+    ET,
+    ET | TupleToEffects<A>
+  >
+
+  export function withLatestFrom<
+    T,
+    ET,
+    A extends EffectObservable<unknown, unknown>[],
+    R,
+  >(
+    ...inputs: readonly [...A, (...value: [T, ...TupleToValue<A>]) => R]
+  ): EffectOperatorFunction<T, R, ET, ET | TupleToEffects<A>>
 }
 
 /// StateObservable
