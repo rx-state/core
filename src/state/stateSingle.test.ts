@@ -14,13 +14,12 @@ import {
 import { map, scan, startWith, take, tap, withLatestFrom } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import {
-  liftEffects,
-  sinkEffects,
+  liftSuspense,
+  sinkSuspense,
   EmptyObservableError,
   NoSubscribersError,
   state,
   SUSPENSE,
-  Effect,
 } from "../"
 
 const scheduler = () =>
@@ -424,13 +423,13 @@ describe("stateSingle", () => {
         sub.unsubscribe()
       })
 
-      it("returns a promise if nothing was emitted after an effect happens", async () => {
-        const source = new Subject<number | null>()
-        const sourceState = state(source.pipe(sinkEffects(null)))
-        const sub = sourceState.pipe(liftEffects()).subscribe()
+      it("returns a promise if nothing was emitted after SUSPENSE happens", async () => {
+        const source = new Subject<number | SUSPENSE>()
+        const sourceState = state(source.pipe(sinkSuspense()))
+        const sub = sourceState.pipe(liftSuspense()).subscribe()
 
         source.next(1)
-        source.next(null)
+        source.next(SUSPENSE)
 
         const value = sourceState.getValue()
         expect(value).toBeInstanceOf(Promise)
@@ -483,41 +482,41 @@ describe("stateSingle", () => {
         await expect(value).rejects.toThrow(NoSubscribersError)
       })
 
-      it("ignores effect errors if there are subscribers that are lifting them", async () => {
-        const subjet = new Subject<number>()
+      it("ignores sinked SUSPENSE if there are subscribers that are lifting them", async () => {
+        const subjet = new Subject<number | SUSPENSE>()
 
-        const source = subjet.pipe(sinkEffects(5 as const))
+        const source = subjet.pipe(sinkSuspense())
         const sourceState = state(source)
 
         sourceState.subscribe({ error() {} })
         const value = sourceState.getValue()
-        sourceState.pipe(liftEffects()).subscribe()
+        sourceState.pipe(liftSuspense()).subscribe()
 
-        subjet.next(5)
-        subjet.next(5)
-        subjet.next(5)
+        subjet.next(SUSPENSE)
+        subjet.next(SUSPENSE)
+        subjet.next(SUSPENSE)
         subjet.next(6)
 
         await expect(value).resolves.toBe(6)
       })
 
-      it("rejects effect errors if there aren't subscribers that are lifting them", async () => {
-        const subjet = new Subject<number>()
-        const source = subjet.pipe(sinkEffects(5 as const))
+      it("rejects sinked SUSPENSE if there aren't subscribers that are lifting them", async () => {
+        const subjet = new Subject<number | SUSPENSE>()
+        const source = subjet.pipe(sinkSuspense())
         const sourceState = state(source)
 
         sourceState.subscribe({ error() {} })
         const value = sourceState.getValue() as Promise<any>
         sourceState.subscribe({ error() {} })
 
-        subjet.next(5)
+        subjet.next(SUSPENSE)
 
-        await expect(value).rejects.toEqual(new Effect(5))
+        await expect(value).rejects.toEqual(SUSPENSE)
       })
 
-      it("handles re-entrant promises on Effect errors", async () => {
-        const subjet = new Subject<number>()
-        const source = subjet.pipe(sinkEffects(5 as const))
+      it("handles re-entrant promises on sinked SUSPENSE", async () => {
+        const subjet = new Subject<number | SUSPENSE>()
+        const source = subjet.pipe(sinkSuspense())
         const sourceState = state(source)
 
         let promise: any
@@ -526,7 +525,7 @@ describe("stateSingle", () => {
             promise = sourceState.getValue()
           },
         })
-        const subscription = sourceState.pipeState(liftEffects()).subscribe({
+        const subscription = sourceState.pipeState(liftSuspense()).subscribe({
           next() {
             Promise.resolve().then(() => {
               subscription.unsubscribe()
@@ -534,7 +533,7 @@ describe("stateSingle", () => {
           },
         })
 
-        subjet.next(5)
+        subjet.next(SUSPENSE)
 
         await expect(promise).rejects.toThrow(NoSubscribersError)
       })

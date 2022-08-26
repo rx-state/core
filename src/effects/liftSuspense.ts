@@ -1,18 +1,9 @@
 import { Observable, Subscriber } from "rxjs"
-import type { EffectObservable, liftEffects as ILiftEffects } from "../index.d"
-import { Effect } from "./Effect"
+import { SUSPENSE } from "../SUSPENSE"
+import type { liftSuspense as ILiftSuspense } from "../index.d"
 
-export const liftEffects: typeof ILiftEffects = <Args extends Array<any>>(
-  ...args: Args
-) => {
-  const toInclude = new Set(args)
-
-  return <T, E>(
-    source$: EffectObservable<T, E>,
-  ): EffectObservable<
-    T | Args[keyof Args & number],
-    Exclude<E, Args[keyof Args & number]>
-  > => {
+export const liftSuspense: typeof ILiftSuspense = () => {
+  return <T>(source$: Observable<T>): Observable<T | SUSPENSE> => {
     return new Observable((observer) => {
       let subscriber: Subscriber<any>
 
@@ -22,11 +13,8 @@ export const liftEffects: typeof ILiftEffects = <Args extends Array<any>>(
             observer.next(v as any)
           },
           error(e: unknown) {
-            if (
-              e instanceof Effect &&
-              (toInclude.has(e.value) || !toInclude.size)
-            ) {
-              observer.next(e.value)
+            if (e === SUSPENSE) {
+              observer.next(e)
               setSubscriber()
             } else observer.error(e)
           },

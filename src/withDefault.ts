@@ -1,7 +1,8 @@
-import type { EffectObservable, withDefault as IWithDefault } from "./index.d"
+import { Observable } from "rxjs"
+import type { withDefault as IWithDefault } from "./index.d"
 import { state } from "./state"
 
 export const withDefault: typeof IWithDefault =
   <D>(defaultValue: D) =>
-  <T, E>(source$: EffectObservable<T, E>) =>
-    state<D | T, E>(source$, defaultValue)
+  <T>(source$: Observable<T>) =>
+    state<D | T>(source$, defaultValue)
