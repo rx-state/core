@@ -1,4 +1,3 @@
-import { Effect } from "../"
 import {
   noop,
   Observable,
@@ -72,7 +71,7 @@ export default class StateObservable<T> extends Observable<T> {
             this.currentValue = EMPTY_VALUE
 
             const rej = this.promise?.rej
-            if (rej && err instanceof Effect) {
+            if (rej && err === SUSPENSE) {
               this.promise!.rej = () => {
                 rej!(err)
               }

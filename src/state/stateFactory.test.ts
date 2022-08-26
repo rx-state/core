@@ -2,9 +2,10 @@ import "expose-gc"
 import { concat, defer, NEVER, Observable, of, Subject } from "rxjs"
 import { map, take } from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
-import { state } from "./"
-import { sinkEffects, liftEffects } from "../effects"
+import { liftSuspense, sinkSuspense } from "../effects"
 import { StateObservable } from "../index.d"
+import { SUSPENSE } from "../SUSPENSE"
+import { state } from "./"
 
 const scheduler = () =>
   new TestScheduler((actual, expected) => {
@@ -253,16 +254,16 @@ describe("stateFactory", () => {
 
     it("resubscribes to the same instance on synchronous retries", () => {
       let instances = 0
-      const source$ = new Subject<number | null>()
+      const source$ = new Subject<number | SUSPENSE>()
       const state$ = state(() => {
         instances++
-        return source$.pipe(sinkEffects(null))
+        return source$.pipe(sinkSuspense())
       })
 
-      const sub = state$().pipe(liftEffects()).subscribe()
+      const sub = state$().pipe(liftSuspense()).subscribe()
 
       expect(instances).toBe(1)
-      source$.next(null)
+      source$.next(SUSPENSE)
       expect(instances).toBe(1)
       source$.next(1)
       expect(instances).toBe(1)

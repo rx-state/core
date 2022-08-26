@@ -1,10 +1,6 @@
 import type { Observable, OperatorFunction, UnaryFunction } from "rxjs"
 
 /// Effects
-export declare class Effect<T> {
-  constructor(value: T)
-}
-
 export declare function sinkSuspense<T>(): (
   source$: Observable<T>,
 ) => Observable<Exclude<T, SUSPENSE>>
