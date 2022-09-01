@@ -583,6 +583,33 @@ describe("stateSingle", () => {
         sub.unsubscribe()
       })
     })
+
+    it("allows consumers of the StateObservable to consume getValue synchronously after emitting, when a previouse Promise was created", () => {
+      const source = new Subject<number>()
+      const sourceState = state(source)
+
+      let value = 0
+      let error: any = null
+      sourceState
+        .pipe(
+          map((x) => x + (sourceState.getValue() as number)),
+          take(1),
+        )
+        .subscribe({
+          next(v) {
+            value = v
+          },
+          error(e) {
+            error = e
+          },
+        })
+
+      sourceState.getValue()
+      source.next(3)
+
+      expect(error).toBe(null)
+      expect(value).toBe(6)
+    })
   })
 
   describe("getDefaultValue", () => {
