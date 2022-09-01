@@ -58,11 +58,11 @@ export default class StateObservable<T> extends Observable<T> {
         this.subscription = null
         this.subscription = new Subscriber<T>({
           next: (value: T) => {
-            this.subject!.next((this.currentValue = value))
             if (this.promise && (value as any) !== SUSPENSE) {
               this.promise.res(value as any)
               this.promise = null
             }
+            this.subject!.next((this.currentValue = value))
           },
           error: (err: any) => {
             this.subscription = null
