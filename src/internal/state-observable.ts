@@ -119,7 +119,7 @@ export default class StateObservable<T> extends Observable<T> {
     }
   }
 
-  pipeState(...ops: OperatorFunction<any, any>[]) {
+  pipeState = (...ops: OperatorFunction<any, any>[]) => {
     const result = (super.pipe as any)(...ops)
     return result instanceof StateObservable
       ? result

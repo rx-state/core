@@ -7,6 +7,7 @@ function cloneProps<T>(
 ) {
   external.getValue = internal.getValue
   external.getRefCount = internal.getRefCount
+  external.pipeState = internal.pipeState
   if ((internal as any).getDefaultValue) {
     ;(external as any).getDefaultValue = (internal as any).getDefaultValue
   }
