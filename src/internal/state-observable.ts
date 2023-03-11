@@ -28,7 +28,11 @@ export default class StateObservable<T> extends Observable<T> {
     teardown = noop,
   ) {
     super((subscriber) => {
-      subscriber.complete = noop
+      const subscriberWithoutComplete = new Subscriber({
+        next: subscriber.next.bind(subscriber),
+        error: subscriber.error.bind(subscriber),
+        complete: noop,
+      })
 
       this.refCount++
       let innerSub: Subscription
@@ -54,7 +58,7 @@ export default class StateObservable<T> extends Observable<T> {
 
       if (!this.subject) {
         this.subject = new Subject<T>()
-        innerSub = this.subject.subscribe(subscriber)
+        innerSub = this.subject.subscribe(subscriberWithoutComplete)
         this.subscription = null
         this.subscription = new Subscriber<T>({
           next: (value: T) => {
@@ -106,7 +110,7 @@ export default class StateObservable<T> extends Observable<T> {
           this.subject!.next((this.currentValue = defaultValue))
         }
       } else {
-        innerSub = this.subject.subscribe(subscriber)
+        innerSub = this.subject.subscribe(subscriberWithoutComplete)
         if (this.currentValue !== EMPTY_VALUE) {
           subscriber.next(this.currentValue)
         }
