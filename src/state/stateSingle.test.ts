@@ -11,7 +11,15 @@ import {
   Subject,
   throwError,
 } from "rxjs"
-import { map, scan, startWith, take, tap, withLatestFrom } from "rxjs/operators"
+import {
+  map,
+  scan,
+  startWith,
+  take,
+  takeUntil,
+  tap,
+  withLatestFrom,
+} from "rxjs/operators"
 import { TestScheduler } from "rxjs/testing"
 import {
   liftSuspense,
@@ -87,6 +95,19 @@ describe("stateSingle", () => {
 
         expectObservable(shared, sub1).toBe(expected1)
         expectObservable(shared, sub2).toBe(expected2)
+      })
+    })
+
+    it("doesn't prevent derived observables from completing", () => {
+      scheduler().run(({ expectObservable, cold }) => {
+        const source = cold(" a-b-c-d-e-f-g-|")
+        const trigger = cold("-----a|")
+        const expected = "    a-b-c|"
+
+        const shared$ = state(source)
+        const result$ = shared$.pipe(takeUntil(trigger))
+
+        expectObservable(result$).toBe(expected)
       })
     })
 
