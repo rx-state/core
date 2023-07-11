@@ -18,7 +18,8 @@
         "import": "./dist/rxstate.core.es2019.mjs",
         "require": "./dist/index.cjs"
       },
-      "default": "./dist/rxstate.core.es2017.js"
+      "default": "./dist/rxstate.core.es2017.js",
+      "types": "./src/index.d.ts"
     },
     "./package.json": "./package.json"
   },
