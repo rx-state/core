@@ -1,5 +1,5 @@
 {
-  "version": "0.1.3",
+  "version": "0.1.4",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/rx-state/core.git"
@@ -18,8 +18,8 @@
         "import": "./dist/rxstate.core.es2019.mjs",
         "require": "./dist/index.cjs"
       },
-      "default": "./dist/rxstate.core.es2017.js",
-      "types": "./src/index.d.ts"
+      "types": "./src/index.d.ts",
+      "default": "./dist/rxstate.core.es2017.js"
     },
     "./package.json": "./package.json"
   },
