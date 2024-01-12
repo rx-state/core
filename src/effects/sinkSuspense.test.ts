@@ -10,14 +10,14 @@ describe("sinkSuspense", () => {
 
     const values: Array<number> = []
     const errors = new Array<any>()
-    test$.subscribe(
-      (x) => {
+    test$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         errors.push(e)
       },
-    )
+    })
 
     expect(values).toEqual([1])
     expect(errors).toEqual([SUSPENSE])
@@ -35,11 +35,11 @@ describe("sinkSuspense", () => {
     const values: Array<number | null> = []
     const errors = new Array<any>()
     const sinked$ = source$.pipe(sinkSuspense())
-    sinked$.subscribe(
-      (x) => {
+    sinked$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         if (e === SUSPENSE) {
           errors.push(e)
           sinked$.subscribe((x) => {
@@ -49,7 +49,7 @@ describe("sinkSuspense", () => {
           errors.push(e)
         }
       },
-    )
+    })
 
     expect(nSubscriptions).toBe(1)
     expect(values).toEqual([0, 1, 2, 4, 5, 6, 7, 8, 9])
@@ -69,11 +69,11 @@ describe("sinkSuspense", () => {
     const values: Array<number | null> = []
     const errors = new Array<any>()
     const sinked$ = source$.pipe(sinkSuspense())
-    sinked$.subscribe(
-      (x) => {
+    sinked$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         if (e === SUSPENSE) {
           errors.push(e)
           sinked$.subscribe((x) => {
@@ -83,14 +83,14 @@ describe("sinkSuspense", () => {
           errors.push(e)
         }
       },
-    )
+    })
 
     expect(nSubscriptions).toBe(1)
     expect(values).toEqual([0, 1])
     expect(errors).toEqual([2])
   })
 
-  it("propagates completes", () => {
+  it("propagates complete", () => {
     let nSubscriptions = 0
     const source$ = new Observable<number | SUSPENSE>((observer) => {
       nSubscriptions++
@@ -103,11 +103,11 @@ describe("sinkSuspense", () => {
     const values: Array<number | null> = []
     const errors = new Array<any>()
     const sinked$ = source$.pipe(sinkSuspense())
-    sinked$.subscribe(
-      (x) => {
+    sinked$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         if (e === SUSPENSE) {
           errors.push(e)
           sinked$.subscribe((x) => {
@@ -117,7 +117,7 @@ describe("sinkSuspense", () => {
           errors.push(e)
         }
       },
-    )
+    })
 
     expect(nSubscriptions).toBe(1)
     expect(values).toEqual([0, 1])

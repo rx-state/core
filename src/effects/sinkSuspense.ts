@@ -3,6 +3,18 @@ import { SUSPENSE } from "../SUSPENSE"
 import { sinkSuspense as ISinkSuspense } from "../index.d"
 
 type SubscriberWithInner<T> = Subscriber<T> & { inner: Subscriber<any> }
+
+/**
+ * `sinkSuspense()` and `liftSuspense() are operators that help deal with
+ * SUSPENSE values on the streams, which is useful when the meaning of SUSPENSE
+ * is that everything needs to be reset.
+ *
+ * `sinkSuspense()` is an operator that when it receives a SUSPENSE, it will
+ * throw it as an error down the stream, which resets all of the observables
+ * down below. It will then hold the subscription to the upstream, waiting for a
+ * resubscription to happen immediately. If it doesn't happen, then it will
+ * unsubscribe from upstream.
+ */
 export const sinkSuspense: typeof ISinkSuspense = () => {
   return <T>(source$: Observable<T>) => {
     let waiting: SubscriberWithInner<any> | null = null
@@ -10,38 +22,38 @@ export const sinkSuspense: typeof ISinkSuspense = () => {
     return new Observable((observer) => {
       if (waiting) {
         waiting.inner = observer
-        const outter = waiting!
+        const outer = waiting!
         return () => {
-          if (outter.inner === observer) outter.unsubscribe()
+          if (outer.inner === observer) outer.unsubscribe()
         }
       }
 
-      let outter = new Subscriber<T | SUSPENSE>({
+      let outer = new Subscriber<T | SUSPENSE>({
         next(value: T | SUSPENSE) {
           if (value === SUSPENSE) {
-            waiting = outter
-            outter.inner.error(value)
+            waiting = outer
+            outer.inner.error(value)
             waiting = null
-            if (outter.inner === observer) {
-              outter.unsubscribe()
+            if (outer.inner === observer) {
+              outer.unsubscribe()
             }
           } else {
-            outter.inner.next(value)
+            outer.inner.next(value)
           }
         },
         error(e: unknown) {
-          outter.inner.error(e)
+          outer.inner.error(e)
         },
         complete() {
-          outter.inner.complete()
+          outer.inner.complete()
         },
       }) as SubscriberWithInner<T>
 
-      outter.inner = observer
-      source$.subscribe(outter)
+      outer.inner = observer
+      source$.subscribe(outer)
 
       return () => {
-        if (outter.inner === observer) outter.unsubscribe()
+        if (outer.inner === observer) outer.unsubscribe()
       }
     })
   }

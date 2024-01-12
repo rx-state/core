@@ -12,7 +12,7 @@ import {
 import { liftSuspense, sinkSuspense } from ".."
 
 describe("liftSuspense", () => {
-  it("lifts SUSPENSE", () => {
+  it("resubscribes to its upstream and emits SUSPENSE when it receives SUSPENSE as an error", () => {
     let nSubscriptions = 0
     const source$ = new Observable<number | SUSPENSE>((observer) => {
       nSubscriptions++
@@ -29,14 +29,14 @@ describe("liftSuspense", () => {
       liftSuspense(),
       take(9),
     )
-    values$.subscribe(
-      (x) => {
+    values$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         errors.push(e)
       },
-    )
+    })
 
     expect(nSubscriptions).toBe(1)
     expect(values).toEqual([0, 2, 4, SUSPENSE, 8, 10, SUSPENSE, 14, 16])
@@ -52,14 +52,14 @@ describe("liftSuspense", () => {
 
     const values: Array<number | SUSPENSE> = []
     const errors = new Array<any>()
-    test$.subscribe(
-      (x) => {
+    test$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         errors.push(e)
       },
-    )
+    })
 
     await new Promise((res) => setTimeout(res, 30))
 
@@ -80,14 +80,14 @@ describe("liftSuspense", () => {
 
     const values: Array<number | SUSPENSE> = []
     const errors = new Array<any>()
-    test$.subscribe(
-      (x) => {
+    test$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         errors.push(e)
       },
-    )
+    })
 
     await new Promise((res) => setTimeout(res, 30))
 
@@ -104,16 +104,14 @@ describe("liftSuspense", () => {
 
     const values: Array<number | SUSPENSE> = []
     const errors = new Array<any>()
-    test$.subscribe(
-      (x) => {
+    test$.subscribe({
+      next: (x) => {
         values.push(x)
       },
-      (e) => {
+      error: (e) => {
         errors.push(e)
       },
-    )
-
-    await new Promise((res) => setTimeout(res, 30))
+    })
 
     expect(values).toEqual([1, 3, SUSPENSE, 4, 9, SUSPENSE, 7, 15])
     expect(errors).toEqual([])

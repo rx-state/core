@@ -11,11 +11,28 @@ import { StatePromise } from "../StatePromise"
 import { SUSPENSE } from "../SUSPENSE"
 import { EMPTY_VALUE } from "./empty-value"
 
+/**
+ * StateObservable Represents an Observable state. It has the following
+ * properties:
+ * - It's multicast: The subscription is shared with all the subscribers.
+ * - It replays the last emitted value to every new subscriber.
+ * - It doesn't propagate complete. This allows it to replay the last emitted
+ *   value to subscribers that subscribe after the source completes.
+ * - When all its subscribers unsubscribe, it cleans up everything,
+ *   unsubscribing from the source and resetting the latest value.
+ */
 export default class StateObservable<T> extends Observable<T> {
+  // subject is used to multicast the source observable to all subscribers
   private subject: Subject<T> | null = null
+  // will contain a subscription to the source observable passed to
+  // the constructor
   private subscription: Subscriber<T> | null = null
   private refCount = 0
+  // We keep track of the current value with every emission from the source so
+  // it can be emitted to new subscribers, and returned by getValue()
   private currentValue: T = EMPTY_VALUE
+  // This promise is returned when getValue() is called while there are
+  // subscribers but we have not emitted a value yet
   private promise: {
     res: (value: Exclude<T, SUSPENSE>) => void
     rej: (v: any) => void
@@ -35,6 +52,16 @@ export default class StateObservable<T> extends Observable<T> {
       })
 
       this.refCount++
+      // When a subscriber subscribes to the state observable instance, we want
+      // it to receive next and error events, but we don't want that
+      // subscription to complete, even if this.subject completes. We achieve
+      // this by subscribing to this.subject with a subscriber that omits the
+      // complete handler. innerSub will be a subscription to this.subject,
+      // scoped to each subscription to the state observable instance. When the
+      // subscription to the state observable instance is unsubscribed, innerSub
+      // will be as well. We capture the subscription in innerSub so we can
+      // unsubscribe from it when the subscription to the state observable
+      // instance is unsubscribed.
       let innerSub: Subscription
 
       subscriber.add(() => {
@@ -50,6 +77,11 @@ export default class StateObservable<T> extends Observable<T> {
           this.subject = null
           this.subscription = null
           if (this.promise) {
+            // If we had subscribers, but had not yet emitted a value, and
+            // getValue() was called, this.promise will exist. If getValue()
+            // was called while there were subscribers but we had not emitted
+            // yet, this promise will have been returned from getValue(). Since
+            // we no longer have subscribers, we reject that promise.
             this.promise.rej(new NoSubscribersError())
             this.promise = null
           }
@@ -60,8 +92,11 @@ export default class StateObservable<T> extends Observable<T> {
         this.subject = new Subject<T>()
         innerSub = this.subject.subscribe(subscriberWithoutComplete)
         this.subscription = null
+        // this subscriber will be used to subscribe to the source observable
+        // and proxy emissions to the subject
         this.subscription = new Subscriber<T>({
           next: (value: T) => {
+            // we don't need the promise anymore because we've emitted a value
             if (this.promise && (value as any) !== SUSPENSE) {
               this.promise.res(value as any)
               this.promise = null
@@ -133,6 +168,9 @@ export default class StateObservable<T> extends Observable<T> {
   getRefCount = () => {
     return this.refCount
   }
+  // if we've already emitted a value that is not SUSPENSE, or have a default
+  // value, return that, otherwise return a promise that will resolve when we
+  // emit a non-SUSPENSE value
   getValue = (): Exclude<T, SUSPENSE> | StatePromise<Exclude<T, SUSPENSE>> => {
     if (this.promise) return this.promise.p
     if (
@@ -143,6 +181,8 @@ export default class StateObservable<T> extends Observable<T> {
     if (this.defaultValue !== EMPTY_VALUE) return this.defaultValue as any
     if (this.refCount === 0) throw new NoSubscribersError()
 
+    // if we have subscribers, but we have not emitted a value yet, and
+    // getValue() is called, we create a promise and return it.
     const promise = new StatePromise<Exclude<T, SUSPENSE>>((res, rej) => {
       this.promise = { res, rej, p: null as any }
     })
