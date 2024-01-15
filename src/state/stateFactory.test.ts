@@ -20,7 +20,7 @@ describe("stateFactory", () => {
         const sourceA = cold("a-b-c-d-e")
         const subA = "        ^------!"
         const expectedA = "   a-b-c-d-"
-        sourceSubsA.push("    ^------!--")
+        sourceSubsA.push("    ^------!")
 
         const sourceSubsB = []
         const sourceB = cold("  f-g-h-i-j")
@@ -277,12 +277,15 @@ describe("stateFactory", () => {
       const stateFactory = state((_: string) => NEVER)
       const stateA = stateFactory("a")
       const stateB = stateFactory("b")
+      const stateA_cached = stateFactory("a")
 
       expect(stateA.getRefCount()).toBe(0)
+      expect(stateA_cached.getRefCount()).toBe(0)
       expect(stateB.getRefCount()).toBe(0)
 
       const sub1 = stateA.subscribe()
       expect(stateA.getRefCount()).toBe(1)
+      expect(stateA_cached.getRefCount()).toBe(1)
       expect(stateB.getRefCount()).toBe(0)
 
       const sub2 = stateB.subscribe()
@@ -291,6 +294,7 @@ describe("stateFactory", () => {
 
       sub1.unsubscribe()
       expect(stateA.getRefCount()).toBe(0)
+      expect(stateA_cached.getRefCount()).toBe(0)
       expect(stateB.getRefCount()).toBe(1)
 
       sub2.unsubscribe()

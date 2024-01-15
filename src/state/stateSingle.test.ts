@@ -41,7 +41,7 @@ describe("stateSingle", () => {
       scheduler().run(({ expectObservable, expectSubscriptions, cold }) => {
         const sourceSubs = []
         const source = cold("a-b-c-d-e")
-        sourceSubs.push("    ^------!--")
+        sourceSubs.push("    ^------!")
         const sub = "        ^------!"
         const expected = "   a-b-c-d-"
 
@@ -80,6 +80,10 @@ describe("stateSingle", () => {
 
         expectObservable(shared, sub1).toBe(expected1)
         expectObservable(shared, sub2).toBe(expected2)
+
+        // contrast to subscribing to source directly
+        expectObservable(source, sub1).toBe("a-b-|")
+        expectObservable(source, sub2).toBe("-----a")
       })
     })
 
@@ -90,11 +94,14 @@ describe("stateSingle", () => {
         const expected1 = "  a-b-#---"
         const sub2 = "       -----^--!"
         const expected2 = "  -----a-b-"
+        const sub3 = "       -----^----!"
+        const expected3 = "  -----a-b-#"
 
         const shared = state(source)
 
         expectObservable(shared, sub1).toBe(expected1)
         expectObservable(shared, sub2).toBe(expected2)
+        expectObservable(shared, sub3).toBe(expected3)
       })
     })
 
@@ -111,15 +118,85 @@ describe("stateSingle", () => {
       })
     })
 
+    it("shares existing subscription to source with new subscribers when source has not errored", () => {
+      let subscriptionCount = 0
+      const shared = state(
+        new Observable<string>((obs) => {
+          subscriptionCount++
+          obs.next("a")
+          obs.next("b")
+          obs.next("c")
+        }),
+      )
+      const nexts1: string[] = []
+      const nexts2: string[] = []
+      shared.subscribe({ next: (v: string) => nexts1.push(v) })
+      shared.subscribe({ next: (v: string) => nexts2.push(v) })
+      expect(nexts1).toEqual(["a", "b", "c"])
+      expect(nexts2).toEqual(["c"])
+      expect(subscriptionCount).toEqual(1)
+    })
+
+    it("creates a new subscription to source upon subscribe after source errors", () => {
+      let subscriptionCount = 0
+      const shared = state(
+        new Observable<string>((obs) => {
+          subscriptionCount++
+          obs.next("a")
+          obs.next("b")
+          obs.error("oops")
+        }),
+      )
+      const nexts1: string[] = []
+      const nexts2: string[] = []
+      const errors: string[] = []
+      const captureErr = (e: string) => errors.push(e)
+      shared.subscribe({
+        next: (v: string) => nexts1.push(v),
+        error: captureErr,
+      })
+      shared.subscribe({
+        next: (v: string) => nexts2.push(v),
+        error: captureErr,
+      })
+      expect(nexts1).toEqual(["a", "b"])
+      expect(nexts2).toEqual(["a", "b"])
+      expect(errors).toEqual(["oops", "oops"])
+      expect(subscriptionCount).toEqual(2)
+      shared.subscribe({ error: captureErr })
+      shared.subscribe({ error: captureErr })
+      expect(subscriptionCount).toEqual(4)
+      expect(errors).toEqual(["oops", "oops", "oops", "oops"])
+    })
+
+    it("does not create a new subscription to source upon subscribe after source completes", () => {
+      let subscriptionCount = 0
+      const shared = state(
+        new Observable<string>((obs) => {
+          subscriptionCount++
+          obs.next("a")
+          obs.next("b")
+          obs.complete()
+        }),
+      )
+      const nexts1: string[] = []
+      const nexts2: string[] = []
+      shared.subscribe({ next: (v: string) => nexts1.push(v) })
+      shared.subscribe({ next: (v: string) => nexts2.push(v) })
+      expect(nexts1).toEqual(["a", "b"])
+      expect(nexts2).toEqual(["b"])
+      expect(subscriptionCount).toEqual(1)
+    })
+
     it("handles synchronous error retries", () => {
       let nexts: number[] = []
       let errors: string[] = []
 
-      let thrown = false
+      let thrownCount = 0
       const result$ = state(
         defer(() => {
-          if (!thrown) {
-            thrown = true
+          if (thrownCount < 2) {
+            thrownCount++
             return throwError(() => "error")
           }
           return NEVER
@@ -137,16 +214,17 @@ describe("stateSingle", () => {
       subscribe()
 
       expect(nexts).toEqual([])
-      expect(errors).toEqual(["error"])
+      expect(errors).toEqual(["error", "error"])
     })
 
     it("cleans up the state when an error happens with reentrant subscribers", (done) => {
       let nexts: number[] = []
+      let errors: string[] = []
 
       let count = 0
       const result$ = state(
         new Observable<number>((obs) => {
-          if (count == 0)
+          if (count === 0)
             setTimeout(() => {
               obs.error("error")
             })
@@ -156,7 +234,8 @@ describe("stateSingle", () => {
 
       const subscriber = () =>
         result$.subscribe({
-          error: () => {
+          error: (e) => {
+            errors.push(e)
             result$.subscribe({
               next: (v) => nexts.push(v),
             })
@@ -165,9 +244,14 @@ describe("stateSingle", () => {
       subscriber()
       subscriber()
       subscriber()
+      expect(count).toBe(1)
+      expect(nexts.length).toBe(0)
+      expect(errors.length).toBe(0)
 
       setTimeout(() => {
         expect(nexts).toEqual([1, 1, 1])
+        expect(errors).toEqual(["error", "error", "error"])
+        expect(count).toBe(2)
 
         done()
       }, 100)
@@ -190,7 +274,10 @@ describe("stateSingle", () => {
       const subscribe = () =>
         result$.subscribe({
           next: (v) => (received = v),
-          error: subscribe,
+          error: (e) => {
+            expect(e).toBeInstanceOf(EmptyObservableError)
+            subscribe()
+          },
         })
       subscribe()
 
@@ -234,8 +321,8 @@ describe("stateSingle", () => {
     it("stops listening on a synchronous observable when all observers unsubscribe", () => {
       let sideEffects = 0
       const synchronousObservable = new Observable<number>((subscriber) => {
-        // This will check to see if the subscriber was closed on each loop
-        // when the unsubscribe hits (from the `take`), it should be closed
+        // This will check to see if the subscriber was closed on each iteration.
+        // When the unsubscribe hits (from the `take`), it should be closed.
         for (let i = 0; !subscriber.closed && i < 10; i++) {
           sideEffects++
           subscriber.next(i)
@@ -275,13 +362,13 @@ describe("stateSingle", () => {
     it("restarts when the source has completed and all observers unsubscribe", () => {
       scheduler().run(({ expectObservable, expectSubscriptions, cold }) => {
         const sourceSubs = []
-        const source = cold("a-(b|)          ")
-        sourceSubs.push("-^-!            ")
-        sourceSubs.push("-----------^-!")
-        const sub1 = "-^--!          "
-        const expected1 = "-a-b         "
-        const sub2 = "-----------^--!"
-        const expected2 = "-----------a-b"
+        const source = cold("a-(b|)         ")
+        sourceSubs.push("    -^-!           ")
+        sourceSubs.push("    -----------^-! ")
+        const sub1 = "       -^--!          "
+        const expected1 = "  -a-b           "
+        const sub2 = "       -----------^--!"
+        const expected2 = "  -----------a-b "
 
         const shared = state(source)
 
@@ -292,10 +379,10 @@ describe("stateSingle", () => {
     })
 
     it("handles recursively synchronous subscriptions", () => {
-      scheduler().run(({ expectObservable, hot }) => {
-        const values$ = hot("----b-c-d---")
-        const latest$ = hot("----------x-")
-        const expected = "   a---b-c-d-d-"
+      scheduler().run(({ expectObservable, cold }) => {
+        const values$ = cold("----b-c-d---")
+        const latest$ = cold("----------x-")
+        const expected = "    a---b-c-d-d-"
         const input$: any = merge(
           values$,
           latest$.pipe(
@@ -314,11 +401,14 @@ describe("stateSingle", () => {
       scheduler().run(({ expectObservable }) => {
         const source = from(["a", "b", "c", "d"])
         const sub1 = "^"
-        const expected1 = "  (abcd)"
+        const expected1 = "(abcd)"
 
         const shared = state(source)
 
         expectObservable(shared, sub1).toBe(expected1)
+
+        // contrast to subscribing to source directly
+        expectObservable(source, sub1).toBe("(abcd|)")
       })
     })
 
@@ -504,19 +594,19 @@ describe("stateSingle", () => {
       })
 
       it("ignores sinked SUSPENSE if there are subscribers that are lifting them", async () => {
-        const subjet = new Subject<number | SUSPENSE>()
+        const subject = new Subject<number | SUSPENSE>()
 
-        const source = subjet.pipe(sinkSuspense())
+        const source = subject.pipe(sinkSuspense())
         const sourceState = state(source)
 
         sourceState.subscribe({ error() {} })
         const value = sourceState.getValue()
         sourceState.pipe(liftSuspense()).subscribe()
 
-        subjet.next(SUSPENSE)
-        subjet.next(SUSPENSE)
-        subjet.next(SUSPENSE)
-        subjet.next(6)
+        subject.next(SUSPENSE)
+        subject.next(SUSPENSE)
+        subject.next(SUSPENSE)
+        subject.next(6)
 
         await expect(value).resolves.toBe(6)
       })
@@ -605,7 +695,7 @@ describe("stateSingle", () => {
       })
     })
 
-    it("allows consumers of the StateObservable to consume getValue synchronously after emitting, when a previouse Promise was created", () => {
+    it("allows consumers of the StateObservable to consume getValue synchronously after emitting, when a previous Promise was created", () => {
       const source = new Subject<number>()
       const sourceState = state(source)
 
@@ -625,7 +715,9 @@ describe("stateSingle", () => {
           },
         })
 
-      sourceState.getValue()
+      const p = sourceState.getValue()
+      expect(p).toBeInstanceOf(Promise)
+
       source.next(3)
 
       expect(error).toBe(null)

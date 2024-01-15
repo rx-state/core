@@ -90,13 +90,16 @@ export default class StateObservable<T> extends Observable<T> {
 
       if (!this.subject) {
         this.subject = new Subject<T>()
+        // The subscriber to the state observable instance should be notified
+        // when the subject emits. Ensure that complete never gets called on the
+        // subscriber to the state observable instance, even if the subject
+        // completes.
         innerSub = this.subject.subscribe(subscriberWithoutComplete)
-        this.subscription = null
         // this subscriber will be used to subscribe to the source observable
         // and proxy emissions to the subject
         this.subscription = new Subscriber<T>({
           next: (value: T) => {
-            // we don't need the promise anymore because we've emitted a value
+            // we don't need the promise anymore once we've emitted a value
             if (this.promise && (value as any) !== SUSPENSE) {
               this.promise.res(value as any)
               this.promise = null
@@ -121,6 +124,8 @@ export default class StateObservable<T> extends Observable<T> {
             }
           },
           complete: () => {
+            // if the source observable completes, discard the subscription and
+            // complete the subject to clean up and release memory
             this.subscription = null
             if (this.promise) {
               this.promise.rej(new EmptyObservableError())
@@ -136,6 +141,9 @@ export default class StateObservable<T> extends Observable<T> {
               return subject!.error(new EmptyObservableError())
             }
 
+            // if a synchronous observable completes without emitting a value
+            // and there is a default value, ensure we emit the default value
+            // before completing
             this.subject!.next((this.currentValue = defaultValue))
             this.subject!.complete()
           },
