@@ -164,30 +164,45 @@ describe("stateFactory", () => {
           }),
         )
 
-        const stream = getShared(key)
+        const stream1 = getShared(key)
 
         let val
-        stream.pipe(take(1)).subscribe((x) => {
+        stream1.pipe(take(1)).subscribe((x) => {
           val = x
         })
         expect(val).toBe(1)
+        expect(stream1.getRefCount()).toBe(0)
 
-        const subscription = getShared(key).subscribe((x) => {
+        const stream2 = getShared(key)
+        const subscription1 = stream2.subscribe((x) => {
           val = x
         })
         expect(val).toBe(2)
+        expect(stream1.getRefCount()).toBe(0)
+        expect(stream2.getRefCount()).toBe(1)
 
-        stream.pipe(take(1)).subscribe((x) => {
+        stream1.pipe(take(1)).subscribe((x) => {
           val = x
         })
         expect(val).toBe(2)
+        expect(stream1.getRefCount()).toBe(1)
+        expect(stream2.getRefCount()).toBe(1)
 
-        stream.pipe(take(1)).subscribe((x) => {
+        stream1.pipe(take(1)).subscribe((x) => {
           val = x
         })
         expect(val).toBe(2)
+        expect(stream1.getRefCount()).toBe(1)
+        expect(stream2.getRefCount()).toBe(1)
 
-        subscription.unsubscribe()
+        const subscription2 = stream2.subscribe((x) => {
+          val = x
+        })
+        expect(stream1.getRefCount()).toBe(2)
+        expect(stream2.getRefCount()).toBe(2)
+
+        subscription1.unsubscribe()
+        subscription2.unsubscribe()
       })
 
       it("does not crash when the observable lazily references its enhanced self", () => {
@@ -331,6 +346,23 @@ describe("stateFactory", () => {
 
       expect(state1.getDefaultValue()).toBe(1)
       expect(state2.getDefaultValue()).toBe(2)
+    })
+  })
+
+  describe.skip("subject", () => {
+    it("should work", () => {
+      const subj1 = new Subject<number>()
+      const subj2 = new Subject<number>()
+      subj1.subscribe({ next: (val) => expect(val).toBe(1) })
+      subj1.next(1)
+      subj2.subscribe(subj1)
+      subj2.next(2)
+      subj1.complete()
+
+      subj1.complete()
+      subj1.next(2)
+      subj1.subscribe({ next: (val) => expect(val).toBe(1) })
+      subj1.next(2)
     })
   })
 })

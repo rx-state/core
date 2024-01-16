@@ -13,6 +13,19 @@ function cloneProps<T>(
   }
 }
 
+/**
+ *
+ * @param getObservable function that takes arbitrary arguments and returns an
+ * observable
+ * @param defaultValue value or a function that returns a value
+ * @returns a function that returns a StateObservable. The StateObservable will
+ * be shared between all calls to the function with the same arguments. The
+ * StateObservables is cached in a NestedMap which uses the arguments as keys.
+ * Arguments are compared by reference for lookup in the cache, so they should
+ * be primitives to benefit from the cache. If the arguments are objects that
+ * are not referentially equal, a new observable will be created each time the
+ * function is called.
+ */
 export default function connectFactoryObservable<A extends [], O>(
   getObservable: (...args: A) => Observable<O>,
   defaultValue: O | ((...args: A) => O),
@@ -22,12 +35,12 @@ export default function connectFactoryObservable<A extends [], O>(
     typeof defaultValue === "function" ? defaultValue : () => defaultValue
   ) as (...args: A) => O
 
-  const getSharedObservables$ = (input: A): StateObservable<O> => {
+  const getSharedObservable$ = (input: A): StateObservable<O> => {
     for (let i = input.length - 1; input[i] === undefined && i > -1; i--) {
       input.splice(-1)
     }
-    const keys = [input.length, ...input] as any as A
-    const cachedVal = cache.get(keys)
+    const key = [input.length, ...input] as any as A
+    const cachedVal = cache.get(key)
 
     if (cachedVal !== undefined) {
       return cachedVal
@@ -37,17 +50,39 @@ export default function connectFactoryObservable<A extends [], O>(
       getObservable(...input),
       getDefaultValue(...input),
       () => {
-        cache.delete(keys)
+        cache.delete(key)
       },
     )
 
     const publicShared$ = new Observable<O>((subscriber) => {
-      const inCache = cache.get(keys)
+      const inCache = cache.get(key)
       let source$: StateObservable<O> = sharedObservable$
 
+      // Handle the case where
+      // 1. the observable was subscribed to, then
+      // 2. all subscribers unsubscribed (causing it to be removed from the
+      //    cache), then
+      // 3. a new subscriber subscribed to that same observable.
+      // We have closed over the observable, so we add it back to the cache
+      // here.
       if (!inCache) {
-        cache.set(keys, result)
-      } else if (inCache !== publicShared$) {
+        cache.set(key, publicShared$)
+      }
+      // Handle the case where
+      // 1. the observable returned by the initial call to getSharedObservable$
+      //    was subscribed to, then
+      // 2. all its subscribers unsubscribed (causing it to be removed from the
+      //    cache), then
+      // 3. getSharedObservable$ was called again with the same arguments, but
+      //    we created a new observable (and cached it) because there was no
+      //    cached one, then
+      // 4. the observable returned by the initial call to getSharedObservable$
+      //    was subscribed to again; (publicShared$, which we have closed over,
+      //    at this point refers the original observable).
+      // We want to share the cached observable, not the original one, but we
+      // need to ensure that the original one shares the methods of the
+      // cached one.
+      else if (inCache !== publicShared$) {
         source$ = inCache
         cloneProps(source$, publicShared$)
       }
@@ -56,13 +91,11 @@ export default function connectFactoryObservable<A extends [], O>(
     }) as StateObservable<O>
     cloneProps(sharedObservable$, publicShared$)
 
-    const result: StateObservable<O> = publicShared$
-
-    cache.set(keys, result)
-    return result
+    cache.set(key, publicShared$)
+    return publicShared$
   }
 
-  return (...input: A) => getSharedObservables$(input)
+  return (...input: A) => getSharedObservable$(input)
 }
 
 class NestedMap<K extends [], V extends Object> {
