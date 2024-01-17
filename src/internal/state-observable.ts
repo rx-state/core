@@ -22,7 +22,7 @@ import { EMPTY_VALUE } from "./empty-value"
  *   unsubscribing from the source and resetting the latest value.
  */
 export default class StateObservable<T> extends Observable<T> {
-  // subject is used to multicast the source observable to all subscribers
+  // subject is used to multicast the source observable to all subscribers.
   private subject: Subject<T> | null = null
   // will contain a subscription to the source observable passed to
   // the constructor
@@ -99,7 +99,8 @@ export default class StateObservable<T> extends Observable<T> {
         // and proxy emissions to the subject
         this.subscription = new Subscriber<T>({
           next: (value: T) => {
-            // we don't need the promise anymore once we've emitted a value
+            // we don't need the promise anymore once we've emitted a
+            // non-SUSPENSE value
             if (this.promise && (value as any) !== SUSPENSE) {
               this.promise.res(value as any)
               this.promise = null
@@ -114,17 +115,30 @@ export default class StateObservable<T> extends Observable<T> {
 
             const rej = this.promise?.rej
             if (rej && err === SUSPENSE) {
+              // If the source observable errors with SUSPENSE, that is a signal that
+              // consumers of the state observable should be reset. The promise returned by
+              // getValue() should be rejected with SUSPENSE, and other errors should
+              // be ignored until the subscription is reset. To achieve this, we
+              // reset the rejection function to wrap a call to the original
+              // rejection function, passing SUSPENSE, so that if it is called
+              // with another error/value, the passed error/value will be
+              // ignored and the promise will be rejected with SUSPENSE.
               this.promise!.rej = () => {
                 rej!(err)
               }
             }
+            // Propagate the error to the subscriber to the state observable.
+            // This will end the subscription, calling the cleanup function that
+            // can cause the promise to be reset to null.
             subject!.error(err)
+            // if the promise was not reset to null, reset the rejection
+            // function to the original
             if (rej && this.promise) {
               this.promise.rej = rej
             }
           },
           complete: () => {
-            // if the source observable completes, discard the subscription and
+            // if the source observable completes, discard the subscription to it and
             // complete the subject to clean up and release memory
             this.subscription = null
             if (this.promise) {
@@ -135,6 +149,9 @@ export default class StateObservable<T> extends Observable<T> {
             if (this.currentValue !== EMPTY_VALUE)
               return this.subject!.complete()
 
+            // If we have no current value, no promise to fulfill, and there is
+            // no default value, there is nothing to emit, so we error. We no
+            // longer need the subject.
             if (defaultValue === EMPTY_VALUE) {
               const subject = this.subject
               this.subject = null
